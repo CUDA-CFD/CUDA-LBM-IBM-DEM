@@ -1,3 +1,11 @@
+## [0.8.0] - 2026-08-02
+
+- Freeze the published 2D single-particle sedimentation benchmark.
+- Add physical-to-lattice unit conversion in `SedimentationBenchmark.hpp`.
+- Use a 200 x 600 lattice with a 25-node particle diameter.
+- Add periodic vertical fluid boundaries and no-slip side walls.
+- Add benchmark reference trajectory data and documentation.
+
 # Changelog
 
 ## v0.1.0

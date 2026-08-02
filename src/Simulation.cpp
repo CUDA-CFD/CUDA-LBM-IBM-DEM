@@ -10,8 +10,19 @@
 #include <stdexcept>
 
 Simulation::Simulation()
-    : fluid_(100, 220, 0.10, 0.0),
-      particle_(50.0, 175.0, 8.0, 1.25),
+    : fluid_(
+          SedimentationBenchmark::nx,
+          SedimentationBenchmark::ny,
+          SedimentationBenchmark::latticeViscosity,
+          0.0,
+          true
+      ),
+      particle_(
+          SedimentationBenchmark::initialXLattice,
+          SedimentationBenchmark::initialYLattice,
+          SedimentationBenchmark::particleRadiusLattice,
+          SedimentationBenchmark::latticeParticleDensity
+      ),
       csv_("sedimentation.csv") {
     fluid_.initialize();
 
@@ -19,7 +30,18 @@ Simulation::Simulation()
         throw std::runtime_error("Unable to open sedimentation.csv");
     }
 
-    csv_ << "step,time,x,y,vx,vy,ax,ay,theta,omega,alpha,"
+    std::cout << "Benchmark: " << SedimentationBenchmark::name << '\n'
+              << "Reference: " << SedimentationBenchmark::reference << '\n'
+              << "Grid: " << SedimentationBenchmark::nx << " x "
+              << SedimentationBenchmark::ny << '\n'
+              << "Particle diameter: "
+              << 2.0 * SedimentationBenchmark::particleRadiusLattice
+              << " lattice units\n"
+              << "tau: " << SedimentationBenchmark::relaxationTime << '\n'
+              << "physical dt: "
+              << SedimentationBenchmark::physicalTimeStep << " s\n\n";
+
+    csv_ << "step,time_s,x_lu,y_lu,x_m,y_m,vx_lu,vy_lu,ax_lu,ay_lu,theta,omega,alpha,"
             "FhydroX,FhydroY,FgravityY,FbuoyancyY,FexternalY,"
             "FtotalX,FtotalY,translationalKE,rotationalKE,totalKE,"
             "particleReynolds,verticalForceResidual\n";
@@ -77,9 +99,12 @@ void Simulation::run(int steps, int outputInterval) {
         const double verticalForceResidual =
             hydrodynamicForceY + externalForceY;
 
-        csv_ << t << ',' << t * dt_ << ','
+        csv_ << t << ','
+             << t * SedimentationBenchmark::physicalTimeStep << ','
              << particle_.x << ',' << particle_.y << ','
-             << particle_.vx << ',' << particle_.vy << ','
+             << particle_.x * SedimentationBenchmark::dx << ','
+             << particle_.y * SedimentationBenchmark::dx << ','
+             << particle_.vx << ',' << particle_.vy << ',' 
              << particle_.ax << ',' << particle_.ay << ','
              << particle_.theta << ',' << particle_.omega << ','
              << particle_.alpha << ','

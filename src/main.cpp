@@ -1,14 +1,19 @@
 #include "Simulation.hpp"
+
 #include <exception>
 #include <iostream>
 
 int main() {
     try {
-        Simulation sim;
-        sim.run(12000, 500);
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << '\n';
+        Simulation simulation;
+        simulation.run(
+            Simulation::defaultSteps(),
+            Simulation::defaultOutputInterval()
+        );
+    } catch (const std::exception& exception) {
+        std::cerr << "Error: " << exception.what() << '\n';
         return 1;
     }
+
     return 0;
 }

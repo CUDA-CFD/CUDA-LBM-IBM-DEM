@@ -3,7 +3,14 @@
 
 class LBMSolver {
 public:
-    LBMSolver(int nx, int ny, double viscosity, double lidVelocity = 0.0);
+    LBMSolver(
+        int nx,
+        int ny,
+        double viscosity,
+        double lidVelocity = 0.0,
+        bool periodicY = false
+    );
+
     void initialize();
     void computeMacroscopic();
     void collideAndForce();
@@ -16,6 +23,7 @@ public:
     double lidVelocity() const noexcept { return lidVelocity_; }
     double viscosity() const noexcept { return nu_; }
     double relaxationFrequency() const noexcept { return omega_; }
+    bool periodicY() const noexcept { return periodicY_; }
 
     int nodeIndex(int x, int y) const noexcept { return y * nx_ + x; }
     double& forceX(int node) { return forceX_[node]; }
@@ -33,6 +41,7 @@ public:
 private:
     int nx_, ny_, n_;
     double lidVelocity_, nu_, tau_, omega_;
+    bool periodicY_;
     std::vector<double> f_, fNew_, rho_, ux_, uy_, forceX_, forceY_;
     int popIndex(int node, int dir) const noexcept;
 };
