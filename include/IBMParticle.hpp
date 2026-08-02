@@ -12,13 +12,18 @@ public:
     void integrate(double dt);
 
     [[nodiscard]] double area() const noexcept;
+    [[nodiscard]] double translationalKineticEnergy() const noexcept;
+    [[nodiscard]] double rotationalKineticEnergy() const noexcept;
 
     double x{};
     double y{};
     double vx{};
     double vy{};
+    double ax{};
+    double ay{};
     double theta{};
     double omega{};
+    double alpha{};
     double radius{};
     double density{};
     double mass{};

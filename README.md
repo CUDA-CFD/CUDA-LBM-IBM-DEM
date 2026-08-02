@@ -9,11 +9,11 @@ A modular research prototype for two-dimensional particle sedimentation using:
 - hydrodynamic force and torque extraction
 - separately evaluated gravity and buoyancy forces
 - VTK output for ParaView
-- CSV sedimentation diagnostics
+- CSV sedimentation diagnostics, including acceleration, force balance, Reynolds number, and kinetic energy
 
 ## Current status
 
-The repository currently contains the **CPU sedimentation baseline** with explicit gravity and buoyancy force bookkeeping. It is not yet the final literature-validated release. The next stages are:
+The repository currently contains the **CPU sedimentation baseline** with explicit gravity, buoyancy, acceleration, force-balance, Reynolds-number, and kinetic-energy diagnostics. It is not yet the final literature-validated release. The next stages are:
 
 1. lock one published sedimentation benchmark;
 2. add the required moving-particle/fictitious-fluid correction;

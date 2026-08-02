@@ -19,9 +19,10 @@ Simulation::Simulation()
         throw std::runtime_error("Unable to open sedimentation.csv");
     }
 
-    csv_ << "step,time,x,y,vx,vy,omega,"
-            "FhydroX,FhydroY,FgravityY,FbuoyancyY,"
-            "FexternalY,FtotalX,FtotalY\n";
+    csv_ << "step,time,x,y,vx,vy,ax,ay,theta,omega,alpha,"
+            "FhydroX,FhydroY,FgravityY,FbuoyancyY,FexternalY,"
+            "FtotalX,FtotalY,translationalKE,rotationalKE,totalKE,"
+            "particleReynolds,verticalForceResidual\n";
 }
 
 void Simulation::run(int steps, int outputInterval) {
@@ -50,9 +51,11 @@ void Simulation::run(int steps, int outputInterval) {
         const double hydrodynamicForceX = particle_.forceX;
         const double hydrodynamicForceY = particle_.forceY;
 
-        // Commit 006: gravity and buoyancy are the only external loads.
-        // Particle-wall contact is intentionally deferred to Commit 007.
+        // Gravity and buoyancy are the only external loads in this commit.
         particle_.addExternalForce(0.0, externalForceY);
+
+        const double totalForceX = particle_.forceX;
+        const double totalForceY = particle_.forceY;
 
         fluid_.computeMacroscopic();
         fluid_.collideAndForce();
@@ -60,14 +63,32 @@ void Simulation::run(int steps, int outputInterval) {
 
         particle_.integrate(dt_);
 
+        const double translationalKE =
+            particle_.translationalKineticEnergy();
+        const double rotationalKE =
+            particle_.rotationalKineticEnergy();
+        const double totalKE = translationalKE + rotationalKE;
+
+        const double particleReynolds =
+            2.0 * particle_.radius * std::hypot(particle_.vx, particle_.vy) /
+            fluid_.viscosity();
+
+        // At terminal settling this residual should approach zero.
+        const double verticalForceResidual =
+            hydrodynamicForceY + externalForceY;
+
         csv_ << t << ',' << t * dt_ << ','
              << particle_.x << ',' << particle_.y << ','
              << particle_.vx << ',' << particle_.vy << ','
-             << particle_.omega << ','
+             << particle_.ax << ',' << particle_.ay << ','
+             << particle_.theta << ',' << particle_.omega << ','
+             << particle_.alpha << ','
              << hydrodynamicForceX << ',' << hydrodynamicForceY << ','
              << gravityForceY << ',' << buoyancyForceY << ','
              << externalForceY << ','
-             << particle_.forceX << ',' << particle_.forceY << '\n';
+             << totalForceX << ',' << totalForceY << ','
+             << translationalKE << ',' << rotationalKE << ',' << totalKE << ','
+             << particleReynolds << ',' << verticalForceResidual << '\n';
 
         if (t % outputInterval == 0) {
             std::ostringstream fluidFilename;
@@ -88,21 +109,16 @@ void Simulation::run(int steps, int outputInterval) {
             io::writeFluid(fluid_, fluidFilename.str());
             io::writeParticle(particle_, particleFilename.str());
 
-            const double forceBalanceY =
-                hydrodynamicForceY + externalForceY;
-
-            const double particleReynolds =
-                2.0 * particle_.radius * std::abs(particle_.vy) /
-                fluid_.viscosity();
-
             std::cout << "step=" << t
                       << " y=" << particle_.y
                       << " vy=" << particle_.vy
+                      << " ay=" << particle_.ay
                       << " Re_p=" << particleReynolds
                       << " Fh_y=" << hydrodynamicForceY
                       << " Fg=" << gravityForceY
                       << " Fb=" << buoyancyForceY
-                      << " Fnet_y=" << forceBalanceY
+                      << " Fnet_y=" << totalForceY
+                      << " KE=" << totalKE
                       << '\n';
         }
     }

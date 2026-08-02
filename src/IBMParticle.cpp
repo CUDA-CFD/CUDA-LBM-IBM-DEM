@@ -48,9 +48,13 @@ void IBMParticle::addExternalForce(double fx, double fy) {
 }
 
 void IBMParticle::integrate(double dt) {
-    vx += forceX / mass * dt;
-    vy += forceY / mass * dt;
-    omega += torque / inertia * dt;
+    ax = forceX / mass;
+    ay = forceY / mass;
+    alpha = torque / inertia;
+
+    vx += ax * dt;
+    vy += ay * dt;
+    omega += alpha * dt;
 
     x += vx * dt;
     y += vy * dt;
@@ -61,4 +65,12 @@ void IBMParticle::integrate(double dt) {
 
 double IBMParticle::area() const noexcept {
     return pi * radius * radius;
+}
+
+double IBMParticle::translationalKineticEnergy() const noexcept {
+    return 0.5 * mass * (vx * vx + vy * vy);
+}
+
+double IBMParticle::rotationalKineticEnergy() const noexcept {
+    return 0.5 * inertia * omega * omega;
 }
