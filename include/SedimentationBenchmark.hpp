@@ -58,4 +58,10 @@ struct SedimentationBenchmark {
     static constexpr int timeSteps =
         static_cast<int>(simulatedPhysicalTime / physicalTimeStep); // 10000
     static constexpr int outputInterval = 500;
+
+    // Linear spring-dashpot wall-contact parameters in lattice units.
+    // The stiffness gives a small static overlap under the effective weight,
+    // while the damping is close to critical for the particle mass.
+    static constexpr double wallNormalStiffness = 1.0;
+    static constexpr double wallNormalDamping = 50.0;
 };

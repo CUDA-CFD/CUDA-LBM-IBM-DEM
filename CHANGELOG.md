@@ -35,3 +35,9 @@
 
 ### Changed
 - Expanded sedimentation CSV output to support hydrodynamic force-balance verification.
+
+## v0.9.0 - Commit 009
+
+- Added linear spring-dashpot contact with all four container walls.
+- Added wall-force, overlap, and contact-state diagnostics to the CSV output.
+- Prevented the sedimenting particle from passing through the bottom boundary.

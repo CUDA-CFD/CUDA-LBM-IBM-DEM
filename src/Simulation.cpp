@@ -2,6 +2,7 @@
 
 #include "IBMCoupling.hpp"
 #include "VTKWriter.hpp"
+#include "WallContact.hpp"
 
 #include <cmath>
 #include <iomanip>
@@ -43,6 +44,7 @@ Simulation::Simulation()
 
     csv_ << "step,time_s,x_lu,y_lu,x_m,y_m,vx_lu,vy_lu,ax_lu,ay_lu,theta,omega,alpha,"
             "FhydroX,FhydroY,FgravityY,FbuoyancyY,FexternalY,"
+            "FwallX,FwallY,wallOverlap,wallContactActive,"
             "FtotalX,FtotalY,translationalKE,rotationalKE,totalKE,"
             "particleReynolds,verticalForceResidual\n";
 }
@@ -73,8 +75,17 @@ void Simulation::run(int steps, int outputInterval) {
         const double hydrodynamicForceX = particle_.forceX;
         const double hydrodynamicForceY = particle_.forceY;
 
-        // Gravity and buoyancy are the only external loads in this commit.
         particle_.addExternalForce(0.0, externalForceY);
+
+        // Prevent the rigid particle from crossing the container boundary.
+        const WallContactLoads wallContact = computeWallContact(
+            particle_,
+            static_cast<double>(SedimentationBenchmark::nx),
+            static_cast<double>(SedimentationBenchmark::ny),
+            wallNormalStiffness_,
+            wallNormalDamping_
+        );
+        particle_.addExternalForce(wallContact.forceX, wallContact.forceY);
 
         const double totalForceX = particle_.forceX;
         const double totalForceY = particle_.forceY;
@@ -111,6 +122,9 @@ void Simulation::run(int steps, int outputInterval) {
              << hydrodynamicForceX << ',' << hydrodynamicForceY << ','
              << gravityForceY << ',' << buoyancyForceY << ','
              << externalForceY << ','
+             << wallContact.forceX << ',' << wallContact.forceY << ','
+             << wallContact.maximumOverlap << ','
+             << static_cast<int>(wallContact.active) << ','
              << totalForceX << ',' << totalForceY << ','
              << translationalKE << ',' << rotationalKE << ',' << totalKE << ','
              << particleReynolds << ',' << verticalForceResidual << '\n';
@@ -142,6 +156,8 @@ void Simulation::run(int steps, int outputInterval) {
                       << " Fh_y=" << hydrodynamicForceY
                       << " Fg=" << gravityForceY
                       << " Fb=" << buoyancyForceY
+                      << " Fwall_y=" << wallContact.forceY
+                      << " overlap=" << wallContact.maximumOverlap
                       << " Fnet_y=" << totalForceY
                       << " KE=" << totalKE
                       << '\n';

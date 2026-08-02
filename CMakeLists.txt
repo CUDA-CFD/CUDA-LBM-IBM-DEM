@@ -10,6 +10,7 @@ add_executable(lbm_ibm_dem
     src/IBMParticle.cpp
     src/IBMCoupling.cpp
     src/VTKWriter.cpp
+    src/WallContact.cpp
     src/Simulation.cpp
 )
 

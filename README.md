@@ -49,3 +49,10 @@ results/       generated or curated result files
 ## License
 
 MIT License.
+
+### Particle-wall contact
+
+The benchmark executable includes a normal linear spring-dashpot interaction
+with the container walls. The contact force is compressive only and is applied
+when the circular particle overlaps a wall. The CSV output records the wall
+force, maximum overlap, and active-contact state.
