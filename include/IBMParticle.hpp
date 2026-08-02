@@ -1,21 +1,40 @@
 #pragma once
+
 #include <vector>
 
 class IBMParticle {
 public:
     IBMParticle(double x, double y, double radius, double density);
+
     void updateMarkers();
     void clearLoads();
     void addExternalForce(double fx, double fy);
-    void addWallContact(double xmin, double xmax, double ymin, double ymax,
-                        double kn, double cn);
     void integrate(double dt);
 
-    double x{}, y{}, vx{}, vy{}, theta{}, omega{}, radius{}, density{}, mass{}, inertia{};
-    double forceX{}, forceY{}, torque{};
+    [[nodiscard]] double area() const noexcept;
+
+    double x{};
+    double y{};
+    double vx{};
+    double vy{};
+    double theta{};
+    double omega{};
+    double radius{};
+    double density{};
+    double mass{};
+    double inertia{};
+
+    double forceX{};
+    double forceY{};
+    double torque{};
+
     int markerCount{};
     double ds{};
-    std::vector<double> markerX, markerY;
-    std::vector<double> fluidUx, fluidUy;
-    std::vector<double> markerForceX, markerForceY;
+
+    std::vector<double> markerX;
+    std::vector<double> markerY;
+    std::vector<double> fluidUx;
+    std::vector<double> fluidUy;
+    std::vector<double> markerForceX;
+    std::vector<double> markerForceY;
 };

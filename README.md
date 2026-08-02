@@ -7,13 +7,13 @@ A modular research prototype for two-dimensional particle sedimentation using:
 - four-point direct-forcing immersed boundary method
 - translating and rotating circular rigid particle
 - hydrodynamic force and torque extraction
-- gravity, buoyancy, and particle-wall contact
+- separately evaluated gravity and buoyancy forces
 - VTK output for ParaView
 - CSV sedimentation diagnostics
 
 ## Current status
 
-The repository currently contains the **CPU sedimentation baseline**. It is not yet the final literature-validated release. The next stages are:
+The repository currently contains the **CPU sedimentation baseline** with explicit gravity and buoyancy force bookkeeping. It is not yet the final literature-validated release. The next stages are:
 
 1. lock one published sedimentation benchmark;
 2. add the required moving-particle/fictitious-fluid correction;
