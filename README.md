@@ -56,3 +56,21 @@ The benchmark executable includes a normal linear spring-dashpot interaction
 with the container walls. The contact force is compressive only and is applied
 when the circular particle overlaps a wall. The CSV output records the wall
 force, maximum overlap, and active-contact state.
+
+## Validate the sedimentation trajectory
+
+Run the full benchmark first:
+
+```bash
+./build/lbm_ibm_dem
+```
+
+Then compare `sedimentation.csv` with the published N=100 particle-position data:
+
+```bash
+python3 tools/validate_sedimentation.py
+```
+
+The validation utility has no third-party Python dependencies. It generates a
+comparison CSV, a Markdown error report, and an SVG plot under
+`results/sedimentation_validation/`.
