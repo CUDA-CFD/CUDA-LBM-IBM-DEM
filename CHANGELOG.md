@@ -53,3 +53,11 @@
 - Added RMSE, relative RMSE, mean absolute error, and maximum absolute error.
 - Added automatic comparison CSV, Markdown report, and SVG plot generation.
 - Added the optional CMake target `validate_sedimentation`.
+
+## Commit 012 - CUDA macroscopic kernel
+
+- Added optional CUDA 12.5 build support through `ENABLE_CUDA`.
+- Added CUDA device reporting and runtime error checking.
+- Ported the LBM macroscopic density and velocity calculation to CUDA.
+- Added an automatic CPU-GPU comparison before the CPU sedimentation run.
+- Kept the complete sedimentation time loop on the CPU for this commit.

@@ -32,6 +32,7 @@ public:
     double velocityY(int node) const { return uy_[node]; }
     double density(int node) const { return rho_[node]; }
 
+    const std::vector<double>& populations() const noexcept { return f_; }
     const std::vector<double>& rho() const noexcept { return rho_; }
     const std::vector<double>& ux() const noexcept { return ux_; }
     const std::vector<double>& uy() const noexcept { return uy_; }
