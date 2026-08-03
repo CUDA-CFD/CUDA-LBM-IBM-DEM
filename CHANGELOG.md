@@ -1,3 +1,8 @@
+## Unreleased
+
+- Split `LBMSolver.cpp` into initialization, macroscopic, collision, and streaming translation units to prepare a one-to-one CPU/CUDA implementation mapping.
+- No numerical algorithm or execution order was changed.
+
 ## [0.8.0] - 2026-08-02
 
 - Freeze the published 2D single-particle sedimentation benchmark.

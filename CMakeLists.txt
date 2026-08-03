@@ -7,6 +7,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(lbm_ibm_dem
     src/main.cpp
     src/LBMSolver.cpp
+    src/LBMInitialize.cpp
+    src/LBMMacroscopic.cpp
+    src/LBMCollision.cpp
+    src/LBMStreaming.cpp
     src/IBMParticle.cpp
     src/IBMCoupling.cpp
     src/VTKWriter.cpp

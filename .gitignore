@@ -26,3 +26,6 @@ results/sedimentation_validation/
 sedimentation.csv
 fluid_*.vtk
 particle_*.vtk
+
+build-cuda/
+build-test/
