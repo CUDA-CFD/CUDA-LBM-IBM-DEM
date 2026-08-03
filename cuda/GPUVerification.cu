@@ -4,6 +4,7 @@
 #include "LBMCollision.cuh"
 #include "LBMMacroscopic.cuh"
 #include "LBMStreaming.cuh"
+#include "LBMSolverCUDA.cuh"
 #include "LBMSolver.hpp"
 #include "SedimentationBenchmark.hpp"
 #include "VerificationMetrics.hpp"
@@ -80,34 +81,24 @@ void reportFailure(
 VerificationSnapshot collectSnapshot(
     int step,
     const LBMSolver& cpuSolver,
-    const cuda_backend::DeviceArray<double>& devicePopulations,
-    const cuda_backend::DeviceArray<double>& deviceDensity,
-    const cuda_backend::DeviceArray<double>& deviceVelocityX,
-    const cuda_backend::DeviceArray<double>& deviceVelocityY)
+    const cuda_backend::LBMSolverCUDA& gpuSolver)
 {
-    std::vector<double> gpuPopulations;
-    std::vector<double> gpuDensity;
-    std::vector<double> gpuVelocityX;
-    std::vector<double> gpuVelocityY;
-
-    devicePopulations.copyToHost(gpuPopulations);
-    deviceDensity.copyToHost(gpuDensity);
-    deviceVelocityX.copyToHost(gpuVelocityX);
-    deviceVelocityY.copyToHost(gpuVelocityY);
+    const cuda_backend::LBMHostState gpuState =
+        gpuSolver.downloadState();
 
     VerificationSnapshot snapshot;
     snapshot.step = step;
     snapshot.density = calculateArrayErrorMetrics(
-        cpuSolver.rho(), gpuDensity
+        cpuSolver.rho(), gpuState.density
     );
     snapshot.velocityX = calculateArrayErrorMetrics(
-        cpuSolver.ux(), gpuVelocityX
+        cpuSolver.ux(), gpuState.velocityX
     );
     snapshot.velocityY = calculateArrayErrorMetrics(
-        cpuSolver.uy(), gpuVelocityY
+        cpuSolver.uy(), gpuState.velocityY
     );
     snapshot.populations = calculateArrayErrorMetrics(
-        cpuSolver.populations(), gpuPopulations
+        cpuSolver.populations(), gpuState.populations
     );
     return snapshot;
 }
@@ -147,47 +138,24 @@ int runFullDomainGPUVerification(const GPUVerificationSettings& settings)
     applyDeterministicVerificationForces(cpuSolver);
     cpuSolver.computeMacroscopic();
 
-    const std::size_t nodeCount =
-        static_cast<std::size_t>(cpuSolver.nodes());
-    const std::size_t populationCount = nodeCount * Q;
-
-    cuda_backend::DeviceArray<double> devicePopulationsA(populationCount);
-    cuda_backend::DeviceArray<double> devicePopulationsB(populationCount);
-    cuda_backend::DeviceArray<double> deviceDensity(nodeCount);
-    cuda_backend::DeviceArray<double> deviceVelocityX(nodeCount);
-    cuda_backend::DeviceArray<double> deviceVelocityY(nodeCount);
-    cuda_backend::DeviceArray<double> deviceForceX(nodeCount);
-    cuda_backend::DeviceArray<double> deviceForceY(nodeCount);
-
-    devicePopulationsA.copyFromHost(cpuSolver.populations());
-    deviceForceX.copyFromHost(cpuSolver.forceX());
-    deviceForceY.copyFromHost(cpuSolver.forceY());
-
-    cuda_backend::launchComputeMacroscopic(
-        devicePopulationsA.data(),
-        deviceForceX.data(),
-        deviceForceY.data(),
-        deviceDensity.data(),
-        deviceVelocityX.data(),
-        deviceVelocityY.data(),
-        cpuSolver.nodes()
+    cuda_backend::LBMSolverCUDA gpuSolver(
+        cpuSolver.nx(),
+        cpuSolver.ny(),
+        cpuSolver.viscosity(),
+        cpuSolver.lidVelocity(),
+        cpuSolver.periodicY()
     );
-    CUDA_CHECK(cudaDeviceSynchronize());
+    gpuSolver.initializeFromHost(cpuSolver);
+    gpuSolver.synchronize();
 
     writeVerificationCsvHeader(settings.csvFilename);
 
     auto initialSnapshot = collectSnapshot(
         0,
         cpuSolver,
-        devicePopulationsA,
-        deviceDensity,
-        deviceVelocityX,
-        deviceVelocityY
+        gpuSolver
     );
     appendVerificationCsv(settings.csvFilename, initialSnapshot);
-
-    cuda_backend::DeviceArray<double>* currentPopulations = &devicePopulationsA;
-    cuda_backend::DeviceArray<double>* nextPopulations = &devicePopulationsB;
 
     bool passed = true;
 
@@ -196,59 +164,27 @@ int runFullDomainGPUVerification(const GPUVerificationSettings& settings)
         cpuSolver.collideAndForce();
         cpuSolver.stream();
 
-        cuda_backend::launchComputeMacroscopic(
-            currentPopulations->data(),
-            deviceForceX.data(),
-            deviceForceY.data(),
-            deviceDensity.data(),
-            deviceVelocityX.data(),
-            deviceVelocityY.data(),
-            cpuSolver.nodes()
-        );
-        cuda_backend::launchCollideAndForce(
-            currentPopulations->data(),
-            deviceDensity.data(),
-            deviceVelocityX.data(),
-            deviceVelocityY.data(),
-            deviceForceX.data(),
-            deviceForceY.data(),
-            cpuSolver.relaxationFrequency(),
-            cpuSolver.nodes()
-        );
-        cuda_backend::launchPullStreaming(
-            currentPopulations->data(),
-            nextPopulations->data(),
-            deviceDensity.data(),
-            cpuSolver.nx(),
-            cpuSolver.ny(),
-            cpuSolver.lidVelocity(),
-            cpuSolver.periodicY()
-        );
-        std::swap(currentPopulations, nextPopulations);
+        gpuSolver.step();
 
         if (step % settings.interval != 0 && step != settings.steps) {
             continue;
         }
 
-        CUDA_CHECK(cudaDeviceSynchronize());
+        gpuSolver.synchronize();
 
         const VerificationSnapshot snapshot = collectSnapshot(
             step,
             cpuSolver,
-            *currentPopulations,
-            deviceDensity,
-            deviceVelocityX,
-            deviceVelocityY
+            gpuSolver
         );
         appendVerificationCsv(settings.csvFilename, snapshot);
 
         std::cout
-    << "step " << std::setw(6) << step
-    << " | max |delta_rho|=" << snapshot.density.maxAbsolute
-    << " max |delta_ux|=" << snapshot.velocityX.maxAbsolute
-    << " max |delta_uy|=" << snapshot.velocityY.maxAbsolute
-    << " max |delta_f|=" << snapshot.populations.maxAbsolute
-    << '\n';
+            << "step " << std::setw(6) << step
+            << " | max |delta rho|=" << snapshot.density.maxAbsolute
+            << " |delta ux|=" << snapshot.velocityX.maxAbsolute
+            << " |delta uy|=" << snapshot.velocityY.maxAbsolute
+            << " |delta f|=" << snapshot.populations.maxAbsolute << '\n';
 
         if (exceedsTolerance(snapshot.density, settings)) {
             reportFailure(

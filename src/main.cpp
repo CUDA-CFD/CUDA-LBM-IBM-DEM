@@ -3,6 +3,7 @@
 #ifdef USE_CUDA
 #include "CUDAUtils.cuh"
 #include "GPUVerification.hpp"
+#include "GPULBMRunner.cuh"
 #endif
 
 #include <cstdlib>
@@ -15,7 +16,8 @@ namespace {
 
 struct CommandLineOptions {
     bool verify = false;
-    int verificationSteps = 1000;
+    bool gpuLbm = false;
+    int steps = 1000;
     int verificationInterval = 100;
 };
 
@@ -45,11 +47,14 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         if (argument == "--verify") {
             options.verify = true;
         }
+        else if (argument == "--gpu-lbm") {
+            options.gpuLbm = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
             }
-            options.verificationSteps =
+            options.steps =
                 parsePositiveInteger(argv[++index], "--steps");
         }
         else if (argument == "--interval") {
@@ -63,6 +68,7 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
             std::cout
                 << "Usage:\n"
                 << "  lbm_ibm_dem\n"
+                << "  lbm_ibm_dem --gpu-lbm [--steps N]\n"
                 << "  lbm_ibm_dem --verify [--steps N] [--interval N]\n";
             std::exit(0);
         }
@@ -81,17 +87,34 @@ int main(int argc, char** argv)
     try {
         const CommandLineOptions options = parseCommandLine(argc, argv);
 
+        if (options.verify && options.gpuLbm) {
+            throw std::invalid_argument(
+                "Choose either --verify or --gpu-lbm, not both."
+            );
+        }
+
         if (options.verify) {
 #ifdef USE_CUDA
             cuda_backend::printDeviceInformation();
 
             GPUVerificationSettings settings;
-            settings.steps = options.verificationSteps;
+            settings.steps = options.steps;
             settings.interval = options.verificationInterval;
             return runFullDomainGPUVerification(settings);
 #else
             throw std::runtime_error(
                 "GPU verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.gpuLbm) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            return cuda_backend::runPersistentGpuLbm(options.steps);
+#else
+            throw std::runtime_error(
+                "The GPU LBM mode requires a CUDA-enabled build."
             );
 #endif
         }

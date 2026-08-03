@@ -60,6 +60,8 @@ if(ENABLE_CUDA)
         cuda/LBMMacroscopic.cu
         cuda/LBMCollision.cu
         cuda/LBMStreaming.cu
+        cuda/LBMSolverCUDA.cu
+        cuda/GPULBMRunner.cu
         cuda/GPUVerification.cu
         tests/VerificationMetrics.cpp
     )

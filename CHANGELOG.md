@@ -84,3 +84,14 @@
 - Added maximum, L2, and relative-L2 error metrics for density, velocity, and populations.
 - Added failure diagnostics identifying the node, population direction, and values.
 - Added CSV output and a dependency-free SVG plotting utility.
+
+## Commit 015 - Persistent CUDA LBM solver
+
+- Added `LBMSolverCUDA` with persistent device-resident fluid arrays.
+- Connected macroscopic reconstruction, collision, and pull streaming into one
+  GPU timestep.
+- Preserved independent kernel-level verification functions.
+- Updated full-domain repeated verification to exercise the production CUDA
+  solver class.
+- Added `--gpu-lbm` for timing the device-resident LBM pipeline and reporting
+  MLUPS.
