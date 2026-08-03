@@ -4,6 +4,7 @@
 #include "CUDAUtils.cuh"
 #include "LBMMacroscopic.cuh"
 #include "LBMCollision.cuh"
+#include "LBMStreaming.cuh"
 #include "LBMSolver.hpp"
 #endif
 
@@ -39,6 +40,7 @@ void runCudaMacroscopicVerification()
     verificationSolver.computeMacroscopic();
     cuda_backend::verifyMacroscopicCUDA(verificationSolver);
     cuda_backend::verifyCollisionCUDA(verificationSolver);
+    cuda_backend::verifyStreamingCUDA(verificationSolver);
 }
 #endif
 
@@ -52,7 +54,7 @@ int main()
 #endif
 
         // The complete sedimentation simulation remains on the CPU.
-        // Macroscopic reconstruction and collision are now verified on CUDA.
+        // Macroscopic reconstruction, collision, and streaming are now verified on CUDA.
         Simulation simulation;
         simulation.run(
             Simulation::defaultSteps(),

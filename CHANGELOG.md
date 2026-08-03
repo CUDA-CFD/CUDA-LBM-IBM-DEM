@@ -69,3 +69,9 @@
 - Added automatic CPU-GPU comparison for all nine post-collision populations.
 - Moved the reusable `DeviceArray<T>` RAII wrapper into `CUDAUtils.cuh`.
 - Kept the complete sedimentation time loop on the CPU.
+
+## Commit 014
+
+- Added a CUDA pull-streaming kernel with one thread per destination node.
+- Added CPU–GPU verification for all nine post-stream populations.
+- Added documentation of the pull data-access model and boundary handling.

@@ -59,6 +59,7 @@ if(ENABLE_CUDA)
         cuda/CUDAUtils.cu
         cuda/LBMMacroscopic.cu
         cuda/LBMCollision.cu
+        cuda/LBMStreaming.cu
     )
 
     target_include_directories(
