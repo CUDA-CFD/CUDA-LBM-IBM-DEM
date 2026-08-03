@@ -21,3 +21,17 @@ if(MSVC)
 else()
   target_compile_options(lbm_ibm_dem PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+  add_custom_target(validate_sedimentation
+      COMMAND ${Python3_EXECUTABLE}
+              ${PROJECT_SOURCE_DIR}/tools/validate_sedimentation.py
+              --simulation ${PROJECT_SOURCE_DIR}/sedimentation.csv
+              --reference ${PROJECT_SOURCE_DIR}/benchmark/sedimentation/reference_position_N100.csv
+              --output-dir ${PROJECT_SOURCE_DIR}/results/sedimentation_validation
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      COMMENT "Comparing sedimentation.csv with the published N=100 reference data"
+      VERBATIM
+  )
+endif()

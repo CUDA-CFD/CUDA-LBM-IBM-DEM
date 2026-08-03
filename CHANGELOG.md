@@ -41,3 +41,10 @@
 - Added linear spring-dashpot contact with all four container walls.
 - Added wall-force, overlap, and contact-state diagnostics to the CSV output.
 - Prevented the sedimenting particle from passing through the bottom boundary.
+
+## Commit 010 — Automated sedimentation validation
+
+- Added a dependency-free Python validator for the N=100 reference trajectory.
+- Added RMSE, relative RMSE, mean absolute error, and maximum absolute error.
+- Added automatic comparison CSV, Markdown report, and SVG plot generation.
+- Added the optional CMake target `validate_sedimentation`.

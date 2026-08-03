@@ -56,7 +56,7 @@ struct SedimentationBenchmark {
 
     static constexpr double simulatedPhysicalTime = 1.0; // s
     static constexpr int timeSteps =
-        static_cast<int>(simulatedPhysicalTime / physicalTimeStep); // 10000
+        static_cast<int>(simulatedPhysicalTime / physicalTimeStep)+2; // 10000
     static constexpr int outputInterval = 500;
 
     // Linear spring-dashpot wall-contact parameters in lattice units.
