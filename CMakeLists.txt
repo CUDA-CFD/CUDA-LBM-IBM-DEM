@@ -58,6 +58,7 @@ if(ENABLE_CUDA)
         PRIVATE
         cuda/CUDAUtils.cu
         cuda/LBMMacroscopic.cu
+        cuda/LBMCollision.cu
     )
 
     target_include_directories(

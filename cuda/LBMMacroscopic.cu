@@ -60,61 +60,6 @@ __global__ void computeMacroscopicKernel(
         (momentumY + 0.5 * forceY[node]) / localDensity;
 }
 
-class DeviceArray {
-public:
-    explicit DeviceArray(std::size_t count)
-        : count_(count)
-    {
-        CUDA_CHECK(cudaMalloc(
-            reinterpret_cast<void**>(&data_),
-            count_ * sizeof(double)
-        ));
-    }
-
-    ~DeviceArray()
-    {
-        if (data_ != nullptr) {
-            cudaFree(data_);
-        }
-    }
-
-    DeviceArray(const DeviceArray&) = delete;
-    DeviceArray& operator=(const DeviceArray&) = delete;
-
-    double* data() noexcept { return data_; }
-    const double* data() const noexcept { return data_; }
-
-    void copyFromHost(const std::vector<double>& host)
-    {
-        if (host.size() != count_) {
-            throw std::invalid_argument("CUDA copy size mismatch.");
-        }
-
-        CUDA_CHECK(cudaMemcpy(
-            data_,
-            host.data(),
-            count_ * sizeof(double),
-            cudaMemcpyHostToDevice
-        ));
-    }
-
-    void copyToHost(std::vector<double>& host) const
-    {
-        host.resize(count_);
-
-        CUDA_CHECK(cudaMemcpy(
-            host.data(),
-            data_,
-            count_ * sizeof(double),
-            cudaMemcpyDeviceToHost
-        ));
-    }
-
-private:
-    double* data_ = nullptr;
-    std::size_t count_ = 0;
-};
-
 double maximumAbsoluteDifference(
     const std::vector<double>& first,
     const std::vector<double>& second)
@@ -149,12 +94,12 @@ MacroscopicVerificationResult verifyMacroscopicCUDA(
     const std::size_t populationCount =
         nodeCount * static_cast<std::size_t>(Q);
 
-    DeviceArray devicePopulations(populationCount);
-    DeviceArray deviceForceX(nodeCount);
-    DeviceArray deviceForceY(nodeCount);
-    DeviceArray deviceDensity(nodeCount);
-    DeviceArray deviceVelocityX(nodeCount);
-    DeviceArray deviceVelocityY(nodeCount);
+    DeviceArray<double> devicePopulations(populationCount);
+    DeviceArray<double> deviceForceX(nodeCount);
+    DeviceArray<double> deviceForceY(nodeCount);
+    DeviceArray<double> deviceDensity(nodeCount);
+    DeviceArray<double> deviceVelocityX(nodeCount);
+    DeviceArray<double> deviceVelocityY(nodeCount);
 
     devicePopulations.copyFromHost(solver.populations());
     deviceForceX.copyFromHost(solver.forceX());

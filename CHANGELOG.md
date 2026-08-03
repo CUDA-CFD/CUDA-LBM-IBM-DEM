@@ -61,3 +61,11 @@
 - Ported the LBM macroscopic density and velocity calculation to CUDA.
 - Added an automatic CPU-GPU comparison before the CPU sedimentation run.
 - Kept the complete sedimentation time loop on the CPU for this commit.
+
+
+## Commit 013 - CUDA collision kernel
+
+- Added a CUDA implementation of the BGK collision and Guo forcing step.
+- Added automatic CPU-GPU comparison for all nine post-collision populations.
+- Moved the reusable `DeviceArray<T>` RAII wrapper into `CUDAUtils.cuh`.
+- Kept the complete sedimentation time loop on the CPU.
