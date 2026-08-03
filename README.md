@@ -74,3 +74,24 @@ python3 tools/validate_sedimentation.py
 The validation utility has no third-party Python dependencies. It generates a
 comparison CSV, a Markdown error report, and an SVG plot under
 `results/sedimentation_validation/`.
+
+## CPU–GPU verification
+
+Build the CUDA configuration and run the full-domain verification mode:
+
+```powershell
+cmake -S . -B build-cuda -DENABLE_CUDA=ON -A x64
+cmake --build build-cuda --config Release -j
+.\build-cuda\Release\lbm_ibm_dem.exe --verify --steps 1000 --interval 100
+```
+
+The CPU and CUDA LBM pipelines are advanced in lockstep on the complete
+`200 x 600` benchmark lattice. Error histories are written to
+`results/gpu_verification.csv`.
+
+For a longer verification run:
+
+```powershell
+.\build-cuda\Release\lbm_ibm_dem.exe --verify --steps 5000 --interval 100
+python tools\plot_gpu_verification.py
+```

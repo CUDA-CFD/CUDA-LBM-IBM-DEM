@@ -75,3 +75,12 @@
 - Added a CUDA pull-streaming kernel with one thread per destination node.
 - Added CPU–GPU verification for all nine post-stream populations.
 - Added documentation of the pull data-access model and boundary handling.
+
+## Commit 014.5 - Full-domain CUDA verification framework
+
+- Moved CUDA verification out of the normal sedimentation startup path.
+- Added `--verify`, `--steps`, and `--interval` command-line options.
+- Added repeated CPU-GPU comparison on the full 200 x 600 benchmark lattice.
+- Added maximum, L2, and relative-L2 error metrics for density, velocity, and populations.
+- Added failure diagnostics identifying the node, population direction, and values.
+- Added CSV output and a dependency-free SVG plotting utility.

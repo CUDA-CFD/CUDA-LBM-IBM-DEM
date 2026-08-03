@@ -60,12 +60,15 @@ if(ENABLE_CUDA)
         cuda/LBMMacroscopic.cu
         cuda/LBMCollision.cu
         cuda/LBMStreaming.cu
+        cuda/GPUVerification.cu
+        tests/VerificationMetrics.cpp
     )
 
     target_include_directories(
         lbm_ibm_dem
         PRIVATE
         ${PROJECT_SOURCE_DIR}/cuda
+        ${PROJECT_SOURCE_DIR}/tests
     )
 
     target_compile_definitions(

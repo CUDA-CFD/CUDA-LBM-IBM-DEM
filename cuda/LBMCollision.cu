@@ -123,6 +123,28 @@ double maximumAbsoluteDifference(
 
 namespace cuda_backend {
 
+void launchCollideAndForce(
+    double* populations,
+    const double* density,
+    const double* velocityX,
+    const double* velocityY,
+    const double* forceX,
+    const double* forceY,
+    double relaxationFrequency,
+    int numberOfNodes)
+{
+    constexpr int threadsPerBlock = 256;
+    const int blocks =
+        (numberOfNodes + threadsPerBlock - 1) / threadsPerBlock;
+
+    collideAndForceKernel<<<blocks, threadsPerBlock>>>(
+        populations, density, velocityX, velocityY, forceX, forceY,
+        relaxationFrequency, numberOfNodes
+    );
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
 CollisionVerificationResult verifyCollisionCUDA(
     const LBMSolver& solver,
     double tolerance)
@@ -152,11 +174,7 @@ CollisionVerificationResult verifyCollisionCUDA(
     deviceForceX.copyFromHost(solver.forceX());
     deviceForceY.copyFromHost(solver.forceY());
 
-    constexpr int threadsPerBlock = 256;
-    const int blocks =
-        (solver.nodes() + threadsPerBlock - 1) / threadsPerBlock;
-
-    collideAndForceKernel<<<blocks, threadsPerBlock>>>(
+    launchCollideAndForce(
         devicePopulations.data(),
         deviceDensity.data(),
         deviceVelocityX.data(),
@@ -167,7 +185,6 @@ CollisionVerificationResult verifyCollisionCUDA(
         solver.nodes()
     );
 
-    CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
     std::vector<double> gpuPopulations;

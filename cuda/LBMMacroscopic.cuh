@@ -10,6 +10,16 @@ struct MacroscopicVerificationResult {
     double maxVelocityYError = 0.0;
 };
 
+void launchComputeMacroscopic(
+    const double* populations,
+    const double* forceX,
+    const double* forceY,
+    double* density,
+    double* velocityX,
+    double* velocityY,
+    int numberOfNodes
+);
+
 MacroscopicVerificationResult verifyMacroscopicCUDA(
     const LBMSolver& solver,
     double tolerance = 1.0e-13

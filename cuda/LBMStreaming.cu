@@ -145,6 +145,28 @@ double maximumAbsoluteDifference(
 
 namespace cuda_backend {
 
+void launchPullStreaming(
+    const double* sourcePopulations,
+    double* destinationPopulations,
+    const double* density,
+    int nx,
+    int ny,
+    double lidVelocity,
+    bool periodicY)
+{
+    constexpr int threadsPerBlock = 256;
+    const int numberOfNodes = nx * ny;
+    const int blocks =
+        (numberOfNodes + threadsPerBlock - 1) / threadsPerBlock;
+
+    pullStreamingKernel<<<blocks, threadsPerBlock>>>(
+        sourcePopulations, destinationPopulations, density,
+        nx, ny, lidVelocity, periodicY
+    );
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
 StreamingVerificationResult verifyStreamingCUDA(
     const LBMSolver& solver,
     double tolerance)
@@ -170,12 +192,7 @@ StreamingVerificationResult verifyStreamingCUDA(
     deviceSourcePopulations.copyFromHost(preStreamState.populations());
     deviceDensity.copyFromHost(preStreamState.rho());
 
-    constexpr int threadsPerBlock = 256;
-    const int blocks =
-        (preStreamState.nodes() + threadsPerBlock - 1)
-        / threadsPerBlock;
-
-    pullStreamingKernel<<<blocks, threadsPerBlock>>>(
+    launchPullStreaming(
         deviceSourcePopulations.data(),
         deviceDestinationPopulations.data(),
         deviceDensity.data(),
@@ -185,7 +202,6 @@ StreamingVerificationResult verifyStreamingCUDA(
         preStreamState.periodicY()
     );
 
-    CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
     std::vector<double> gpuPopulations;

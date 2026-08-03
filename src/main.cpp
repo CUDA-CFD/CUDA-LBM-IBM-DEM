@@ -2,59 +2,101 @@
 
 #ifdef USE_CUDA
 #include "CUDAUtils.cuh"
-#include "LBMMacroscopic.cuh"
-#include "LBMCollision.cuh"
-#include "LBMStreaming.cuh"
-#include "LBMSolver.hpp"
+#include "GPUVerification.hpp"
 #endif
 
+#include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 
 namespace {
 
-#ifdef USE_CUDA
-void runCudaMacroscopicVerification()
+struct CommandLineOptions {
+    bool verify = false;
+    int verificationSteps = 1000;
+    int verificationInterval = 100;
+};
+
+int parsePositiveInteger(const char* text, const char* optionName)
 {
-    cuda_backend::printDeviceInformation();
+    try {
+        const int value = std::stoi(text);
+        if (value <= 0) {
+            throw std::invalid_argument("not positive");
+        }
+        return value;
+    }
+    catch (const std::exception&) {
+        throw std::invalid_argument(
+            std::string(optionName) + " requires a positive integer."
+        );
+    }
+}
 
-    LBMSolver verificationSolver(
-        32,
-        24,
-        0.1,
-        0.0,
-        false
-    );
+CommandLineOptions parseCommandLine(int argc, char** argv)
+{
+    CommandLineOptions options;
 
-    verificationSolver.initialize();
+    for (int index = 1; index < argc; ++index) {
+        const std::string argument = argv[index];
 
-    // Add a deterministic, spatially varying force so the
-    // half-force velocity correction is also verified.
-    for (int node = 0; node < verificationSolver.nodes(); ++node) {
-        verificationSolver.forceX(node) =
-            1.0e-6 * static_cast<double>((node % 7) - 3);
-        verificationSolver.forceY(node) =
-            1.0e-6 * static_cast<double>((node % 5) - 2);
+        if (argument == "--verify") {
+            options.verify = true;
+        }
+        else if (argument == "--steps") {
+            if (index + 1 >= argc) {
+                throw std::invalid_argument("--steps requires a value.");
+            }
+            options.verificationSteps =
+                parsePositiveInteger(argv[++index], "--steps");
+        }
+        else if (argument == "--interval") {
+            if (index + 1 >= argc) {
+                throw std::invalid_argument("--interval requires a value.");
+            }
+            options.verificationInterval =
+                parsePositiveInteger(argv[++index], "--interval");
+        }
+        else if (argument == "--help" || argument == "-h") {
+            std::cout
+                << "Usage:\n"
+                << "  lbm_ibm_dem\n"
+                << "  lbm_ibm_dem --verify [--steps N] [--interval N]\n";
+            std::exit(0);
+        }
+        else {
+            throw std::invalid_argument("Unknown argument: " + argument);
+        }
     }
 
-    verificationSolver.computeMacroscopic();
-    cuda_backend::verifyMacroscopicCUDA(verificationSolver);
-    cuda_backend::verifyCollisionCUDA(verificationSolver);
-    cuda_backend::verifyStreamingCUDA(verificationSolver);
+    return options;
 }
-#endif
 
 } // namespace
 
-int main()
+int main(int argc, char** argv)
 {
     try {
+        const CommandLineOptions options = parseCommandLine(argc, argv);
+
+        if (options.verify) {
 #ifdef USE_CUDA
-        runCudaMacroscopicVerification();
+            cuda_backend::printDeviceInformation();
+
+            GPUVerificationSettings settings;
+            settings.steps = options.verificationSteps;
+            settings.interval = options.verificationInterval;
+            return runFullDomainGPUVerification(settings);
+#else
+            throw std::runtime_error(
+                "GPU verification requires a CUDA-enabled build."
+            );
 #endif
+        }
 
         // The complete sedimentation simulation remains on the CPU.
-        // Macroscopic reconstruction, collision, and streaming are now verified on CUDA.
         Simulation simulation;
         simulation.run(
             Simulation::defaultSteps(),

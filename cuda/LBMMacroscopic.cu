@@ -84,6 +84,27 @@ double maximumAbsoluteDifference(
 
 namespace cuda_backend {
 
+void launchComputeMacroscopic(
+    const double* populations,
+    const double* forceX,
+    const double* forceY,
+    double* density,
+    double* velocityX,
+    double* velocityY,
+    int numberOfNodes)
+{
+    constexpr int threadsPerBlock = 256;
+    const int blocks =
+        (numberOfNodes + threadsPerBlock - 1) / threadsPerBlock;
+
+    computeMacroscopicKernel<<<blocks, threadsPerBlock>>>(
+        populations, forceX, forceY, density, velocityX, velocityY,
+        numberOfNodes
+    );
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
 MacroscopicVerificationResult verifyMacroscopicCUDA(
     const LBMSolver& solver,
     double tolerance)
@@ -105,11 +126,7 @@ MacroscopicVerificationResult verifyMacroscopicCUDA(
     deviceForceX.copyFromHost(solver.forceX());
     deviceForceY.copyFromHost(solver.forceY());
 
-    constexpr int threadsPerBlock = 256;
-    const int blocks =
-        (solver.nodes() + threadsPerBlock - 1) / threadsPerBlock;
-
-    computeMacroscopicKernel<<<blocks, threadsPerBlock>>>(
+    launchComputeMacroscopic(
         devicePopulations.data(),
         deviceForceX.data(),
         deviceForceY.data(),
@@ -119,7 +136,6 @@ MacroscopicVerificationResult verifyMacroscopicCUDA(
         solver.nodes()
     );
 
-    CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
     std::vector<double> gpuDensity;
