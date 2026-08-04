@@ -1,4 +1,5 @@
 ## Unreleased
+- Added the first CUDA IBM interpolation kernel using one thread per Lagrangian marker and the shared four-point delta kernel.
 
 - Split `LBMSolver.cpp` into initialization, macroscopic, collision, and streaming translation units to prepare a one-to-one CPU/CUDA implementation mapping.
 - No numerical algorithm or execution order was changed.
