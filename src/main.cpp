@@ -6,6 +6,7 @@
 #include "GPULBMRunner.cuh"
 #include "IBMInterpolationVerification.hpp"
 #include "IBMForcingVerification.hpp"
+#include "IBMSpreadingVerification.hpp"
 #endif
 
 #include <cstdlib>
@@ -21,6 +22,7 @@ struct CommandLineOptions {
     bool gpuLbm = false;
     bool verifyIbmInterpolation = false;
     bool verifyIbmForcing = false;
+    bool verifyIbmSpreading = false;
     int steps = 1000;
     int verificationInterval = 100;
 };
@@ -60,6 +62,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--verify-ibm-forcing") {
             options.verifyIbmForcing = true;
         }
+        else if (argument == "--verify-ibm-spreading") {
+            options.verifyIbmSpreading = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
@@ -81,7 +86,8 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --gpu-lbm [--steps N]\n"
                 << "  lbm_ibm_dem --verify [--steps N] [--interval N]\n"
                 << "  lbm_ibm_dem --verify-ibm-interpolation\n"
-                << "  lbm_ibm_dem --verify-ibm-forcing\n";
+                << "  lbm_ibm_dem --verify-ibm-forcing\n"
+                << "  lbm_ibm_dem --verify-ibm-spreading\n";
             std::exit(0);
         }
         else {
@@ -103,7 +109,8 @@ int main(int argc, char** argv)
             static_cast<int>(options.verify) +
             static_cast<int>(options.gpuLbm) +
             static_cast<int>(options.verifyIbmInterpolation) +
-            static_cast<int>(options.verifyIbmForcing);
+            static_cast<int>(options.verifyIbmForcing) +
+            static_cast<int>(options.verifyIbmSpreading);
 
         if (selectedCudaModes > 1) {
             throw std::invalid_argument(
@@ -144,6 +151,17 @@ int main(int argc, char** argv)
 #else
             throw std::runtime_error(
                 "IBM direct-forcing verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.verifyIbmSpreading) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            return runIBMSpreadingVerification();
+#else
+            throw std::runtime_error(
+                "IBM force-spreading verification requires a CUDA-enabled build."
             );
 #endif
         }

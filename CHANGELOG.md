@@ -118,3 +118,17 @@
 - Covered stationary, translating, rotating, combined-motion, varying-fluid, and 1000-marker pseudo-random configurations.
 - Reported maximum absolute and relative L2 errors for both marker-force components.
 
+### Commit 018.1 - Fix CUDA architecture propagation
+
+- Applied `CMAKE_CUDA_ARCHITECTURES` directly to the executable target.
+- Ensured NVCC generates compute capability 8.9 code for the RTX 4090.
+- Fixed the CUDA IBM spreading build, whose double-precision `atomicAdd` requires compute capability 6.0 or newer.
+
+### Commit 018 - CUDA IBM force spreading
+
+- Added a CUDA force-spreading kernel with one thread per Lagrangian marker.
+- Used double-precision `atomicAdd` because multiple markers can update the same Eulerian fluid node.
+- Preserved the CPU four-point delta stencil, boundary clipping, marker spacing, and additive force semantics.
+- Added `--verify-ibm-spreading` with seven deterministic CPU-GPU test cases.
+- Covered single-marker, circular-particle, shifted, boundary, high-contention, pseudo-random, and preloaded-force configurations.
+- Reported maximum absolute and relative L2 errors for both Eulerian force components.

@@ -70,6 +70,8 @@ if(ENABLE_CUDA)
         cuda/IBMInterpolationVerification.cu
         cuda/IBMForcing.cu
         cuda/IBMForcingVerification.cu
+        cuda/IBMSpreading.cu
+        cuda/IBMSpreadingVerification.cu
         tests/VerificationMetrics.cpp
     )
 
@@ -98,6 +100,7 @@ if(ENABLE_CUDA)
         CUDA_STANDARD 17
         CUDA_STANDARD_REQUIRED ON
         CUDA_SEPARABLE_COMPILATION ON
+        CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}"
     )
 
     message(STATUS "CUDA backend: ENABLED")
