@@ -72,6 +72,8 @@ if(ENABLE_CUDA)
         cuda/IBMForcingVerification.cu
         cuda/IBMSpreading.cu
         cuda/IBMSpreadingVerification.cu
+        cuda/IBMHydrodynamicLoads.cu
+        cuda/IBMHydrodynamicLoadsVerification.cu
         tests/VerificationMetrics.cpp
     )
 

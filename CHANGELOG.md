@@ -132,3 +132,12 @@
 - Added `--verify-ibm-spreading` with seven deterministic CPU-GPU test cases.
 - Covered single-marker, circular-particle, shifted, boundary, high-contention, pseudo-random, and preloaded-force configurations.
 - Reported maximum absolute and relative L2 errors for both Eulerian force components.
+
+### Commit 019 - CUDA IBM hydrodynamic-load accumulation
+
+- Added a CUDA kernel that accumulates marker forces into total particle hydrodynamic force and torque.
+- Used double-precision atomic additions because every marker contributes to the same three particle-load scalars.
+- Preserved the CPU sign convention, marker-spacing factor, moment arm, and clear-before-accumulate semantics.
+- Added `--verify-ibm-hydrodynamic-loads` with six deterministic CPU-GPU test cases.
+- Covered single-marker, uniform-force, torque-dominated, varying-force, high-contention, and 4096-marker pseudo-random configurations.
+- Reported absolute and relative errors for particle force X, particle force Y, and torque.

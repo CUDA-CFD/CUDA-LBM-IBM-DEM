@@ -7,6 +7,7 @@
 #include "IBMInterpolationVerification.hpp"
 #include "IBMForcingVerification.hpp"
 #include "IBMSpreadingVerification.hpp"
+#include "IBMHydrodynamicLoadsVerification.hpp"
 #endif
 
 #include <cstdlib>
@@ -23,6 +24,7 @@ struct CommandLineOptions {
     bool verifyIbmInterpolation = false;
     bool verifyIbmForcing = false;
     bool verifyIbmSpreading = false;
+    bool verifyIbmHydrodynamicLoads = false;
     int steps = 1000;
     int verificationInterval = 100;
 };
@@ -65,6 +67,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--verify-ibm-spreading") {
             options.verifyIbmSpreading = true;
         }
+        else if (argument == "--verify-ibm-hydrodynamic-loads") {
+            options.verifyIbmHydrodynamicLoads = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
@@ -87,7 +92,8 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --verify [--steps N] [--interval N]\n"
                 << "  lbm_ibm_dem --verify-ibm-interpolation\n"
                 << "  lbm_ibm_dem --verify-ibm-forcing\n"
-                << "  lbm_ibm_dem --verify-ibm-spreading\n";
+                << "  lbm_ibm_dem --verify-ibm-spreading\n"
+                << "  lbm_ibm_dem --verify-ibm-hydrodynamic-loads\n";
             std::exit(0);
         }
         else {
@@ -110,7 +116,8 @@ int main(int argc, char** argv)
             static_cast<int>(options.gpuLbm) +
             static_cast<int>(options.verifyIbmInterpolation) +
             static_cast<int>(options.verifyIbmForcing) +
-            static_cast<int>(options.verifyIbmSpreading);
+            static_cast<int>(options.verifyIbmSpreading) +
+            static_cast<int>(options.verifyIbmHydrodynamicLoads);
 
         if (selectedCudaModes > 1) {
             throw std::invalid_argument(
@@ -162,6 +169,17 @@ int main(int argc, char** argv)
 #else
             throw std::runtime_error(
                 "IBM force-spreading verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.verifyIbmHydrodynamicLoads) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            return runIBMHydrodynamicLoadsVerification();
+#else
+            throw std::runtime_error(
+                "IBM hydrodynamic-load verification requires a CUDA-enabled build."
             );
 #endif
         }
