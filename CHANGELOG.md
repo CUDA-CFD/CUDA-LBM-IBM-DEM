@@ -96,3 +96,17 @@
   solver class.
 - Added `--gpu-lbm` for timing the device-resident LBM pipeline and reporting
   MLUPS.
+
+### Commit 016B.4 - CUDA IBM interpolation verification
+
+- Added a full-domain CPU-GPU verification mode for IBM marker interpolation.
+- Added `--verify-ibm-interpolation` command-line option.
+- Compared both interpolated marker-velocity components using maximum and relative L2 errors.
+
+### Commit 016B.5 - Multi-case CUDA IBM interpolation verification
+
+- Expanded IBM interpolation verification from one kernel launch to seven deterministic cases.
+- Added centred and fractionally shifted circular-particle configurations.
+- Added explicit marker sets near all four domain boundaries, including partially outside interpolation stencils.
+- Added uniform-field, spatially varying-field, interior-grid, and 1000-marker pseudo-random tests.
+- Reported per-case errors, kernel-launch count, total marker evaluations, and an overall pass/fail result.
