@@ -21,6 +21,9 @@ set(CPU_SOURCES
     src/LBMStreaming.cpp
     src/IBMParticle.cpp
     src/IBMCoupling.cpp
+    src/IBMInterpolation.cpp
+    src/IBMForcing.cpp
+    src/IBMSpreading.cpp
     src/VTKWriter.cpp
     src/WallContact.cpp
     src/Simulation.cpp
@@ -63,6 +66,10 @@ if(ENABLE_CUDA)
         cuda/LBMSolverCUDA.cu
         cuda/GPULBMRunner.cu
         cuda/GPUVerification.cu
+        cuda/IBMInterpolation.cu
+        cuda/IBMInterpolationVerification.cu
+        cuda/IBMForcing.cu
+        cuda/IBMForcingVerification.cu
         tests/VerificationMetrics.cpp
     )
 

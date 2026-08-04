@@ -4,6 +4,8 @@
 #include "CUDAUtils.cuh"
 #include "GPUVerification.hpp"
 #include "GPULBMRunner.cuh"
+#include "IBMInterpolationVerification.hpp"
+#include "IBMForcingVerification.hpp"
 #endif
 
 #include <cstdlib>
@@ -17,6 +19,8 @@ namespace {
 struct CommandLineOptions {
     bool verify = false;
     bool gpuLbm = false;
+    bool verifyIbmInterpolation = false;
+    bool verifyIbmForcing = false;
     int steps = 1000;
     int verificationInterval = 100;
 };
@@ -50,6 +54,12 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--gpu-lbm") {
             options.gpuLbm = true;
         }
+        else if (argument == "--verify-ibm-interpolation") {
+            options.verifyIbmInterpolation = true;
+        }
+        else if (argument == "--verify-ibm-forcing") {
+            options.verifyIbmForcing = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
@@ -69,7 +79,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "Usage:\n"
                 << "  lbm_ibm_dem\n"
                 << "  lbm_ibm_dem --gpu-lbm [--steps N]\n"
-                << "  lbm_ibm_dem --verify [--steps N] [--interval N]\n";
+                << "  lbm_ibm_dem --verify [--steps N] [--interval N]\n"
+                << "  lbm_ibm_dem --verify-ibm-interpolation\n"
+                << "  lbm_ibm_dem --verify-ibm-forcing\n";
             std::exit(0);
         }
         else {
@@ -87,9 +99,15 @@ int main(int argc, char** argv)
     try {
         const CommandLineOptions options = parseCommandLine(argc, argv);
 
-        if (options.verify && options.gpuLbm) {
+        const int selectedCudaModes =
+            static_cast<int>(options.verify) +
+            static_cast<int>(options.gpuLbm) +
+            static_cast<int>(options.verifyIbmInterpolation) +
+            static_cast<int>(options.verifyIbmForcing);
+
+        if (selectedCudaModes > 1) {
             throw std::invalid_argument(
-                "Choose either --verify or --gpu-lbm, not both."
+                "Choose only one CUDA execution or verification mode."
             );
         }
 
@@ -104,6 +122,28 @@ int main(int argc, char** argv)
 #else
             throw std::runtime_error(
                 "GPU verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.verifyIbmInterpolation) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            return runIBMInterpolationVerification();
+#else
+            throw std::runtime_error(
+                "IBM interpolation verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.verifyIbmForcing) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            return runIBMForcingVerification();
+#else
+            throw std::runtime_error(
+                "IBM direct-forcing verification requires a CUDA-enabled build."
             );
 #endif
         }

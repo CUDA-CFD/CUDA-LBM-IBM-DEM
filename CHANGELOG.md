@@ -110,3 +110,11 @@
 - Added explicit marker sets near all four domain boundaries, including partially outside interpolation stencils.
 - Added uniform-field, spatially varying-field, interior-grid, and 1000-marker pseudo-random tests.
 - Reported per-case errors, kernel-launch count, total marker evaluations, and an overall pass/fail result.
+### Commit 017 - CUDA IBM direct forcing
+
+- Added a CUDA direct-forcing kernel with one thread per Lagrangian marker.
+- Preserved the CPU rigid-boundary velocity and force formulas exactly.
+- Added `--verify-ibm-forcing` with six deterministic CPU-GPU test cases.
+- Covered stationary, translating, rotating, combined-motion, varying-fluid, and 1000-marker pseudo-random configurations.
+- Reported maximum absolute and relative L2 errors for both marker-force components.
+
