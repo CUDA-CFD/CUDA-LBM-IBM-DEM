@@ -141,3 +141,12 @@
 - Added `--verify-ibm-hydrodynamic-loads` with six deterministic CPU-GPU test cases.
 - Covered single-marker, uniform-force, torque-dominated, varying-force, high-contention, and 4096-marker pseudo-random configurations.
 - Reported absolute and relative errors for particle force X, particle force Y, and torque.
+
+### Commit 020 - CUDA IBM particle integration
+
+- Added a CUDA rigid-particle integrator that preserves the CPU semi-implicit Euler update order.
+- Added a second marker-parallel kernel that regenerates all Lagrangian marker coordinates from the updated centre and orientation.
+- Kept total force and torque as separate device scalars so the verified hydrodynamic-load kernel can feed the integrator directly.
+- Added `--verify-ibm-particle-integration` with six deterministic CPU-GPU cases.
+- Included a 10000-step repeated integration test and a particle with more than one CUDA block of markers.
+- Reported errors for all particle-state variables and both marker-coordinate arrays.

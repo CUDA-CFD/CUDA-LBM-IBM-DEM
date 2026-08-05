@@ -8,6 +8,7 @@
 #include "IBMForcingVerification.hpp"
 #include "IBMSpreadingVerification.hpp"
 #include "IBMHydrodynamicLoadsVerification.hpp"
+#include "IBMParticleIntegrationVerification.hpp"
 #endif
 
 #include <cstdlib>
@@ -25,6 +26,7 @@ struct CommandLineOptions {
     bool verifyIbmForcing = false;
     bool verifyIbmSpreading = false;
     bool verifyIbmHydrodynamicLoads = false;
+    bool verifyIbmParticleIntegration = false;
     int steps = 1000;
     int verificationInterval = 100;
 };
@@ -70,6 +72,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--verify-ibm-hydrodynamic-loads") {
             options.verifyIbmHydrodynamicLoads = true;
         }
+        else if (argument == "--verify-ibm-particle-integration") {
+            options.verifyIbmParticleIntegration = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
@@ -93,7 +98,8 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --verify-ibm-interpolation\n"
                 << "  lbm_ibm_dem --verify-ibm-forcing\n"
                 << "  lbm_ibm_dem --verify-ibm-spreading\n"
-                << "  lbm_ibm_dem --verify-ibm-hydrodynamic-loads\n";
+                << "  lbm_ibm_dem --verify-ibm-hydrodynamic-loads\n"
+                << "  lbm_ibm_dem --verify-ibm-particle-integration\n";
             std::exit(0);
         }
         else {
@@ -117,7 +123,8 @@ int main(int argc, char** argv)
             static_cast<int>(options.verifyIbmInterpolation) +
             static_cast<int>(options.verifyIbmForcing) +
             static_cast<int>(options.verifyIbmSpreading) +
-            static_cast<int>(options.verifyIbmHydrodynamicLoads);
+            static_cast<int>(options.verifyIbmHydrodynamicLoads) +
+            static_cast<int>(options.verifyIbmParticleIntegration);
 
         if (selectedCudaModes > 1) {
             throw std::invalid_argument(
@@ -180,6 +187,17 @@ int main(int argc, char** argv)
 #else
             throw std::runtime_error(
                 "IBM hydrodynamic-load verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.verifyIbmParticleIntegration) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            return runIBMParticleIntegrationVerification();
+#else
+            throw std::runtime_error(
+                "IBM particle-integration verification requires a CUDA-enabled build."
             );
 #endif
         }
