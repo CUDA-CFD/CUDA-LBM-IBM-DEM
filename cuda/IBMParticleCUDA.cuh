@@ -2,6 +2,7 @@
 
 #include "CUDAUtils.cuh"
 #include "IBMParticleIntegration.cuh"
+#include "IBMSedimentationLoads.cuh"
 
 class IBMParticle;
 
@@ -30,11 +31,21 @@ public:
 
     void initializeFromHost(const IBMParticle& particle);
     void downloadToHost(IBMParticle& particle) const;
+    void downloadRigidStateToHost(IBMParticle& particle) const;
+    IBMSedimentationLoadsCUDA downloadSedimentationLoads() const;
 
     void interpolate(const LBMSolverCUDA& fluid);
     void computeDirectForcing(double dt);
     void spreadToFluid(LBMSolverCUDA& fluid);
     void accumulateHydrodynamicLoads();
+    void applySedimentationLoads(
+        double gravityForceY,
+        double buoyancyForceY,
+        double domainWidth,
+        double domainHeight,
+        double wallNormalStiffness,
+        double wallNormalDamping
+    );
     void integrate(double dt);
     void synchronize() const;
 
@@ -64,6 +75,7 @@ private:
     DeviceArray<double> particleForceX_;
     DeviceArray<double> particleForceY_;
     DeviceArray<double> particleTorque_;
+    DeviceArray<IBMSedimentationLoadsCUDA> sedimentationLoads_;
 };
 
 } // namespace cuda_backend

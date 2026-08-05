@@ -1,8 +1,95 @@
 #include "VTKWriter.hpp"
-#include "LBMSolver.hpp"
+
 #include "IBMParticle.hpp"
+#include "LBMSolver.hpp"
+
 #include <fstream>
-namespace io {
-void writeFluid(const LBMSolver& f,const std::string& name){ std::ofstream out(name); out<<"# vtk DataFile Version 3.0\nLBM fluid\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS "<<f.nx()<<" "<<f.ny()<<" 1\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA "<<f.nodes()<<"\nVECTORS velocity double\n"; for(int n=0;n<f.nodes();++n) out<<f.velocityX(n)<<" "<<f.velocityY(n)<<" 0\n"; }
-void writeParticle(const IBMParticle& p,const std::string& name){ std::ofstream out(name); out<<"# vtk DataFile Version 3.0\nIBM particle\nASCII\nDATASET POLYDATA\nPOINTS "<<p.markerCount<<" double\n"; for(int k=0;k<p.markerCount;++k) out<<p.markerX[k]<<" "<<p.markerY[k]<<" 0\n"; out<<"LINES "<<p.markerCount<<" "<<3*p.markerCount<<"\n"; for(int k=0;k<p.markerCount;++k) out<<"2 "<<k<<" "<<(k+1)%p.markerCount<<"\n"; }
+#include <stdexcept>
+
+namespace io
+{
+
+void writeFluidField(
+    int nx,
+    int ny,
+    const std::vector<double>& velocityX,
+    const std::vector<double>& velocityY,
+    const std::string& filename)
+{
+    const std::size_t expectedSize =
+        static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny);
+
+    if (nx <= 0 || ny <= 0
+        || velocityX.size() != expectedSize
+        || velocityY.size() != expectedSize)
+    {
+        throw std::invalid_argument("Invalid fluid field for VTK output.");
+    }
+
+    std::ofstream out(filename);
+    if (!out)
+    {
+        throw std::runtime_error("Unable to open VTK fluid output file.");
+    }
+
+    out << "# vtk DataFile Version 3.0\n"
+        << "LBM fluid\n"
+        << "ASCII\n"
+        << "DATASET STRUCTURED_POINTS\n"
+        << "DIMENSIONS " << nx << ' ' << ny << " 1\n"
+        << "ORIGIN 0 0 0\n"
+        << "SPACING 1 1 1\n"
+        << "POINT_DATA " << expectedSize << "\n"
+        << "VECTORS velocity double\n";
+
+    for (std::size_t node = 0; node < expectedSize; ++node)
+    {
+        out << velocityX[node] << ' '
+            << velocityY[node] << " 0\n";
+    }
 }
+
+void writeFluid(const LBMSolver& fluid, const std::string& filename)
+{
+    writeFluidField(
+        fluid.nx(),
+        fluid.ny(),
+        fluid.ux(),
+        fluid.uy(),
+        filename
+    );
+}
+
+void writeParticle(
+    const IBMParticle& particle,
+    const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out)
+    {
+        throw std::runtime_error("Unable to open VTK particle output file.");
+    }
+
+    out << "# vtk DataFile Version 3.0\n"
+        << "IBM particle\n"
+        << "ASCII\n"
+        << "DATASET POLYDATA\n"
+        << "POINTS " << particle.markerCount << " double\n";
+
+    for (int marker = 0; marker < particle.markerCount; ++marker)
+    {
+        out << particle.markerX[marker] << ' '
+            << particle.markerY[marker] << " 0\n";
+    }
+
+    out << "LINES " << particle.markerCount << ' '
+        << 3 * particle.markerCount << '\n';
+
+    for (int marker = 0; marker < particle.markerCount; ++marker)
+    {
+        out << "2 " << marker << ' '
+            << (marker + 1) % particle.markerCount << '\n';
+    }
+}
+
+} // namespace io

@@ -13,13 +13,11 @@ A modular research prototype for two-dimensional particle sedimentation using:
 
 ## Current status
 
-The repository currently contains the **CPU sedimentation baseline** with explicit gravity, buoyancy, acceleration, force-balance, Reynolds-number, and kinetic-energy diagnostics. It is not yet the final literature-validated release. The next stages are:
-
-1. lock one published sedimentation benchmark;
-2. add the required moving-particle/fictitious-fluid correction;
-3. validate the CPU solution;
-4. add the CUDA backend;
-5. compare CPU and GPU accuracy and runtime.
+The repository contains the CPU sedimentation baseline and a persistent CUDA
+implementation of the complete LBM-IBM benchmark, including gravity, buoyancy,
+normal wall contact, particle integration, CSV diagnostics, and interval-based
+VTK output. Independent kernel tests and repeated CPU-GPU pipeline comparison
+are available from the command line.
 
 ## Build on macOS or Linux
 
@@ -95,3 +93,34 @@ For a longer verification run:
 .\build-cuda\Release\lbm_ibm_dem.exe --verify --steps 5000 --interval 100
 python tools\plot_gpu_verification.py
 ```
+
+
+## Complete CUDA sedimentation
+
+Build the CUDA configuration:
+
+```powershell
+cmake -S . -B build-cuda `
+    -DENABLE_CUDA=ON `
+    -DCMAKE_CUDA_ARCHITECTURES=89 `
+    -A x64
+cmake --build build-cuda --config Release --parallel
+```
+
+Verify the full CPU and CUDA sedimentation paths:
+
+```powershell
+.\build-cuda\Release\lbm_ibm_dem.exe `
+    --verify-cuda-sedimentation `
+    --steps 100 `
+    --interval 10
+```
+
+Run the full CUDA benchmark:
+
+```powershell
+.\build-cuda\Release\lbm_ibm_dem.exe --gpu-sedimentation
+```
+
+The CUDA run writes `sedimentation_gpu.csv`, `fluid_gpu_*.vtk`, and
+`particle_gpu_*.vtk`.

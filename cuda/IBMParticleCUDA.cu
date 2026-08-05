@@ -5,6 +5,7 @@
 #include "IBMInterpolation.cuh"
 #include "IBMParticle.hpp"
 #include "IBMSpreading.cuh"
+#include "IBMSedimentationLoads.cuh"
 #include "LBMSolverCUDA.cuh"
 
 #include <cuda_runtime.h>
@@ -72,7 +73,8 @@ IBMParticleCUDA::IBMParticleCUDA(const IBMParticle& particle)
       markerForceY_(static_cast<std::size_t>(particle.markerCount)),
       particleForceX_(1),
       particleForceY_(1),
-      particleTorque_(1)
+      particleTorque_(1),
+      sedimentationLoads_(1)
 {
     if (markerCount_ <= 0 || markerSpacing_ <= 0.0)
     {
@@ -96,9 +98,10 @@ void IBMParticleCUDA::initializeFromHost(const IBMParticle& particle)
     particleForceX_.copyFromHost({particle.forceX});
     particleForceY_.copyFromHost({particle.forceY});
     particleTorque_.copyFromHost({particle.torque});
+    sedimentationLoads_.copyFromHost({IBMSedimentationLoadsCUDA{}});
 }
 
-void IBMParticleCUDA::downloadToHost(IBMParticle& particle) const
+void IBMParticleCUDA::downloadRigidStateToHost(IBMParticle& particle) const
 {
     requireMatchingParticle(particle, markerCount_, markerSpacing_);
 
@@ -108,12 +111,6 @@ void IBMParticleCUDA::downloadToHost(IBMParticle& particle) const
     std::vector<double> torqueValues;
 
     particleState_.copyToHost(stateValues);
-    markerX_.copyToHost(particle.markerX);
-    markerY_.copyToHost(particle.markerY);
-    markerFluidUx_.copyToHost(particle.fluidUx);
-    markerFluidUy_.copyToHost(particle.fluidUy);
-    markerForceX_.copyToHost(particle.markerForceX);
-    markerForceY_.copyToHost(particle.markerForceY);
     particleForceX_.copyToHost(forceXValues);
     particleForceY_.copyToHost(forceYValues);
     particleTorque_.copyToHost(torqueValues);
@@ -134,6 +131,25 @@ void IBMParticleCUDA::downloadToHost(IBMParticle& particle) const
     particle.forceX = forceXValues.front();
     particle.forceY = forceYValues.front();
     particle.torque = torqueValues.front();
+}
+
+void IBMParticleCUDA::downloadToHost(IBMParticle& particle) const
+{
+    downloadRigidStateToHost(particle);
+
+    markerX_.copyToHost(particle.markerX);
+    markerY_.copyToHost(particle.markerY);
+    markerFluidUx_.copyToHost(particle.fluidUx);
+    markerFluidUy_.copyToHost(particle.fluidUy);
+    markerForceX_.copyToHost(particle.markerForceX);
+    markerForceY_.copyToHost(particle.markerForceY);
+}
+
+IBMSedimentationLoadsCUDA IBMParticleCUDA::downloadSedimentationLoads() const
+{
+    std::vector<IBMSedimentationLoadsCUDA> values;
+    sedimentationLoads_.copyToHost(values);
+    return values.front();
 }
 
 void IBMParticleCUDA::interpolate(const LBMSolverCUDA& fluid)
@@ -195,6 +211,29 @@ void IBMParticleCUDA::accumulateHydrodynamicLoads()
         particleForceX_.data(),
         particleForceY_.data(),
         particleTorque_.data()
+    );
+}
+
+
+void IBMParticleCUDA::applySedimentationLoads(
+    double gravityForceY,
+    double buoyancyForceY,
+    double domainWidth,
+    double domainHeight,
+    double wallNormalStiffness,
+    double wallNormalDamping)
+{
+    launchIBMSedimentationLoads(
+        particleState_.data(),
+        particleForceX_.data(),
+        particleForceY_.data(),
+        gravityForceY,
+        buoyancyForceY,
+        domainWidth,
+        domainHeight,
+        wallNormalStiffness,
+        wallNormalDamping,
+        sedimentationLoads_.data()
     );
 }
 

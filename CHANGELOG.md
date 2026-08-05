@@ -167,3 +167,13 @@
   coordinates, interpolated marker velocities, and marker forces.
 - Kept gravity, buoyancy, and wall contact outside the CUDA pipeline for this
   commit so the hydrodynamic path can be verified independently.
+
+### Commit 022 - Complete CUDA sedimentation benchmark
+
+- Added a device kernel for gravity, buoyancy, and normal spring-dashpot wall contact.
+- Preserved the CPU external-load addition order and compressive-only contact clamp.
+- Added persistent device diagnostics for hydrodynamic, external, wall, and total particle loads.
+- Added `--verify-cuda-sedimentation` with seven dedicated external-load/contact cases and repeated full CPU-GPU sedimentation comparison.
+- Added `--gpu-sedimentation` for the complete device-resident LBM-IBM benchmark.
+- Added `sedimentation_gpu.csv` plus interval-based `fluid_gpu_*.vtk` and `particle_gpu_*.vtk` output.
+- Limited full fluid and marker device-to-host transfers to VTK output steps; only compact particle/load data are copied for each CSV row.

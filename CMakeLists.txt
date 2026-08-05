@@ -78,6 +78,9 @@ if(ENABLE_CUDA)
         cuda/IBMParticleIntegrationVerification.cu
         cuda/IBMParticleCUDA.cu
         cuda/IBMPipelineVerification.cu
+        cuda/IBMSedimentationLoads.cu
+        cuda/CUDASedimentationSimulation.cu
+        cuda/CUDASedimentationVerification.cu
         tests/VerificationMetrics.cpp
     )
 

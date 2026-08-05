@@ -10,6 +10,8 @@
 #include "IBMHydrodynamicLoadsVerification.hpp"
 #include "IBMParticleIntegrationVerification.hpp"
 #include "IBMPipelineVerification.hpp"
+#include "CUDASedimentationSimulation.cuh"
+#include "CUDASedimentationVerification.hpp"
 #endif
 
 #include <cstdlib>
@@ -29,6 +31,8 @@ struct CommandLineOptions {
     bool verifyIbmHydrodynamicLoads = false;
     bool verifyIbmParticleIntegration = false;
     bool verifyIbmPipeline = false;
+    bool gpuSedimentation = false;
+    bool verifyCudaSedimentation = false;
     bool stepsProvided = false;
     bool intervalProvided = false;
     int steps = 1000;
@@ -82,6 +86,12 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--verify-ibm-pipeline") {
             options.verifyIbmPipeline = true;
         }
+        else if (argument == "--gpu-sedimentation") {
+            options.gpuSedimentation = true;
+        }
+        else if (argument == "--verify-cuda-sedimentation") {
+            options.verifyCudaSedimentation = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
@@ -110,6 +120,10 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --verify-ibm-hydrodynamic-loads\n"
                 << "  lbm_ibm_dem --verify-ibm-particle-integration\n"
                 << "  lbm_ibm_dem --verify-ibm-pipeline "
+                   "[--steps N] [--interval N]\n"
+                << "  lbm_ibm_dem --verify-cuda-sedimentation "
+                   "[--steps N] [--interval N]\n"
+                << "  lbm_ibm_dem --gpu-sedimentation "
                    "[--steps N] [--interval N]\n";
             std::exit(0);
         }
@@ -136,7 +150,9 @@ int main(int argc, char** argv)
             static_cast<int>(options.verifyIbmSpreading) +
             static_cast<int>(options.verifyIbmHydrodynamicLoads) +
             static_cast<int>(options.verifyIbmParticleIntegration) +
-            static_cast<int>(options.verifyIbmPipeline);
+            static_cast<int>(options.verifyIbmPipeline) +
+            static_cast<int>(options.gpuSedimentation) +
+            static_cast<int>(options.verifyCudaSedimentation);
 
         if (selectedCudaModes > 1) {
             throw std::invalid_argument(
@@ -229,6 +245,42 @@ int main(int argc, char** argv)
 #endif
         }
 
+
+        if (options.verifyCudaSedimentation) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            CUDASedimentationVerificationSettings settings;
+            settings.steps = options.stepsProvided ? options.steps : 100;
+            settings.interval =
+                options.intervalProvided ? options.verificationInterval : 10;
+            return runCUDASedimentationVerification(settings);
+#else
+            throw std::runtime_error(
+                "CUDA sedimentation verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.gpuSedimentation) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            const int steps = options.stepsProvided
+                ? options.steps
+                : Simulation::defaultSteps();
+            const int outputInterval = options.intervalProvided
+                ? options.verificationInterval
+                : Simulation::defaultOutputInterval();
+            return cuda_backend::runCudaSedimentation(
+                steps,
+                outputInterval
+            );
+#else
+            throw std::runtime_error(
+                "CUDA sedimentation requires a CUDA-enabled build."
+            );
+#endif
+        }
+
         if (options.gpuLbm) {
 #ifdef USE_CUDA
             cuda_backend::printDeviceInformation();
@@ -240,7 +292,7 @@ int main(int argc, char** argv)
 #endif
         }
 
-        // The complete sedimentation simulation remains on the CPU.
+        // No CUDA mode selected: run the validated CPU sedimentation path.
         Simulation simulation;
         simulation.run(
             Simulation::defaultSteps(),

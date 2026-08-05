@@ -23,5 +23,7 @@ The CUDA backend is ported and verified one production operation at a time.
 - hydrodynamic force and torque accumulation,
 - rigid-particle integration and marker regeneration.
 
-The complete gravity-driven sedimentation benchmark remains on the CPU until
-external loads and wall contact are connected to the persistent CUDA pipeline.
+The complete gravity-driven sedimentation benchmark is available through
+`--gpu-sedimentation`. Gravity, buoyancy, and the normal spring-dashpot wall
+contact model are evaluated on the device. Use `--verify-cuda-sedimentation`
+to compare the complete CPU and CUDA paths in lockstep.
