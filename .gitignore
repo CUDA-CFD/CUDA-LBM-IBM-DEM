@@ -1,20 +1,8 @@
 # Build directories
 build/
+build-cuda/
+build-test/
 cmake-build-*/
-
-# Generated simulation output
-*.vtk
-*.csv
-results/*
-!results/.gitkeep
-
-# macOS
-.DS_Store
-
-# Editors
-.vscode/
-.idea/
-*.swp
 
 # CMake generated files
 CMakeCache.txt
@@ -22,7 +10,24 @@ CMakeFiles/
 cmake_install.cmake
 Makefile
 compile_commands.json
-results/sedimentation_validation/
+
+# Generated simulation output
+*.vtk
+*.csv
+!benchmark/sedimentation/reference_position_N100.csv
 sedimentation.csv
+sedimentation_gpu.csv
 fluid_*.vtk
 particle_*.vtk
+fluid_gpu_*.vtk
+particle_gpu_*.vtk
+
+# Generated reports and plots
+results/*
+!results/.gitkeep
+
+# Editors and operating systems
+.DS_Store
+.vscode/
+.idea/
+*.swp

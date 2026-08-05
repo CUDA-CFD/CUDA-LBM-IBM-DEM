@@ -53,9 +53,18 @@ Pu et al. Values are in centimetres.
 | 0.9 | 0.12 |
 | 1.0 | 0.12 |
 
-## Implementation note
+## Validation workflow
 
-The reported trajectory reaches approximately one particle radius above the
-bottom boundary. The particle-wall contact model will therefore be added in the
-next commit. Commit 008 only freezes the geometry, units, lattice resolution,
-and fluid boundary configuration.
+The CPU solver writes `sedimentation.csv`, and the complete CUDA solver writes
+`sedimentation_gpu.csv`. The validation script interpolates both trajectories
+at the eleven published reference times and reports RMSE, relative RMSE, mean
+absolute error, and maximum absolute error for each solver. It also compares the
+CPU and CUDA trajectories directly over their complete common time range.
+
+```powershell
+python tools\validate_sedimentation.py
+```
+
+The benchmark reference CSV is retained under
+`benchmark/sedimentation/reference_position_N100.csv` even though generated CSV
+files are ignored by Git.
