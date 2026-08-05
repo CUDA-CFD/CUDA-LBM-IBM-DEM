@@ -81,7 +81,9 @@ if(ENABLE_CUDA)
         cuda/IBMSedimentationLoads.cu
         cuda/CUDASedimentationSimulation.cu
         cuda/CUDASedimentationVerification.cu
+        cuda/PerformanceBenchmark.cu
         tests/VerificationMetrics.cpp
+        tests/PerformanceBenchmark.hpp
     )
 
     target_include_directories(
@@ -142,4 +144,28 @@ if(Python3_Interpreter_FOUND)
         COMMENT "Comparing CPU and CUDA sedimentation trajectories with the published N=100 reference data"
         VERBATIM
     )
+endif()
+
+if(ENABLE_CUDA)
+    add_custom_target(benchmark_speedup
+        COMMAND $<TARGET_FILE:lbm_ibm_dem>
+                --benchmark-speedup
+                --steps 10000
+                --warmup 500
+                --repeats 5
+        DEPENDS lbm_ibm_dem
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Benchmarking complete CPU and CUDA sedimentation pipelines"
+        VERBATIM
+    )
+
+    if(Python3_Interpreter_FOUND)
+        add_custom_target(plot_speedup
+            COMMAND ${Python3_EXECUTABLE}
+                    ${PROJECT_SOURCE_DIR}/tools/plot_speedup.py
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+            COMMENT "Plotting CPU-CUDA speedup benchmark"
+            VERBATIM
+        )
+    endif()
 endif()

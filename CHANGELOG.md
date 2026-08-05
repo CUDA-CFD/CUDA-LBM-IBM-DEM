@@ -1,3 +1,9 @@
+## Commit 024 - Complete CPU-CUDA speedup benchmark
+
+- Added reproducible compute-only timing of the complete sedimentation pipeline.
+- Added warm-up exclusion, repeated measurements, synchronized CUDA timing, CSV/Markdown reports, and an SVG plotting utility.
+- Added `--benchmark-speedup --steps N --warmup N --repeats N`.
+
 ## Unreleased
 - Added the first CUDA IBM interpolation kernel using one thread per Lagrangian marker and the shared four-point delta kernel.
 
@@ -186,3 +192,13 @@
 - Expanded the comparison CSV and Markdown report to include both solver results.
 - Updated the CMake validation target, README, and benchmark documentation for the combined workflow.
 - Restored the benchmark reference CSV and explicitly exempted it from the generated-CSV Git ignore rule.
+
+### Commit 024 - Complete CPU-CUDA speedup evaluation
+
+- Added `--benchmark-speedup` for repeated timing of the complete sedimentation physics pipeline on the serial CPU and persistent CUDA backends.
+- Added configurable `--steps`, `--warmup`, and `--repeats` arguments with defaults of 10000, 500, and 5.
+- Excluded allocation, initialization, seed copies, CSV/VTK output, verification downloads, and loop-time console output from the measured region.
+- Added synchronized CUDA wall-clock timing so all queued kernels complete before the timer stops.
+- Alternated CPU-first and CUDA-first measurement order between repeats.
+- Added per-repeat CSV output, a Markdown hardware/timing report, median speedup calculation, and a dependency-free SVG plotting utility.
+- Added CMake targets `benchmark_speedup` and `plot_speedup` plus performance documentation.

@@ -12,6 +12,7 @@
 #include "IBMPipelineVerification.hpp"
 #include "CUDASedimentationSimulation.cuh"
 #include "CUDASedimentationVerification.hpp"
+#include "PerformanceBenchmark.hpp"
 #endif
 
 #include <cstdlib>
@@ -33,11 +34,30 @@ struct CommandLineOptions {
     bool verifyIbmPipeline = false;
     bool gpuSedimentation = false;
     bool verifyCudaSedimentation = false;
+    bool benchmarkSpeedup = false;
     bool stepsProvided = false;
     bool intervalProvided = false;
     int steps = 1000;
     int verificationInterval = 100;
+    int warmupSteps = 500;
+    int repeats = 5;
 };
+
+int parseNonNegativeInteger(const char* text, const char* optionName)
+{
+    try {
+        const int value = std::stoi(text);
+        if (value < 0) {
+            throw std::invalid_argument("negative");
+        }
+        return value;
+    }
+    catch (const std::exception&) {
+        throw std::invalid_argument(
+            std::string(optionName) + " requires a non-negative integer."
+        );
+    }
+}
 
 int parsePositiveInteger(const char* text, const char* optionName)
 {
@@ -92,6 +112,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--verify-cuda-sedimentation") {
             options.verifyCudaSedimentation = true;
         }
+        else if (argument == "--benchmark-speedup") {
+            options.benchmarkSpeedup = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
@@ -99,6 +122,20 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
             options.steps =
                 parsePositiveInteger(argv[++index], "--steps");
             options.stepsProvided = true;
+        }
+        else if (argument == "--warmup") {
+            if (index + 1 >= argc) {
+                throw std::invalid_argument("--warmup requires a value.");
+            }
+            options.warmupSteps =
+                parseNonNegativeInteger(argv[++index], "--warmup");
+        }
+        else if (argument == "--repeats") {
+            if (index + 1 >= argc) {
+                throw std::invalid_argument("--repeats requires a value.");
+            }
+            options.repeats =
+                parsePositiveInteger(argv[++index], "--repeats");
         }
         else if (argument == "--interval") {
             if (index + 1 >= argc) {
@@ -124,7 +161,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --verify-cuda-sedimentation "
                    "[--steps N] [--interval N]\n"
                 << "  lbm_ibm_dem --gpu-sedimentation "
-                   "[--steps N] [--interval N]\n";
+                   "[--steps N] [--interval N]\n"
+                << "  lbm_ibm_dem --benchmark-speedup "
+                   "[--steps N] [--warmup N] [--repeats N]\n";
             std::exit(0);
         }
         else {
@@ -152,7 +191,8 @@ int main(int argc, char** argv)
             static_cast<int>(options.verifyIbmParticleIntegration) +
             static_cast<int>(options.verifyIbmPipeline) +
             static_cast<int>(options.gpuSedimentation) +
-            static_cast<int>(options.verifyCudaSedimentation);
+            static_cast<int>(options.verifyCudaSedimentation) +
+            static_cast<int>(options.benchmarkSpeedup);
 
         if (selectedCudaModes > 1) {
             throw std::invalid_argument(
@@ -257,6 +297,22 @@ int main(int argc, char** argv)
 #else
             throw std::runtime_error(
                 "CUDA sedimentation verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+
+        if (options.benchmarkSpeedup) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            PerformanceBenchmarkSettings settings;
+            settings.steps = options.stepsProvided ? options.steps : 10000;
+            settings.warmupSteps = options.warmupSteps;
+            settings.repeats = options.repeats;
+            return runPerformanceBenchmark(settings);
+#else
+            throw std::runtime_error(
+                "Speedup benchmarking requires a CUDA-enabled build."
             );
 #endif
         }

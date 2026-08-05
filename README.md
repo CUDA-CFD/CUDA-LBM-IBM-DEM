@@ -136,3 +136,32 @@ Run the full CUDA benchmark:
 
 The CUDA run writes `sedimentation_gpu.csv`, `fluid_gpu_*.vtk`, and
 `particle_gpu_*.vtk`.
+
+## CPU–CUDA speedup benchmark
+
+Measure the complete sedimentation physics pipeline without CSV/VTK output or
+verification transfers:
+
+```powershell
+.\build-cuda\Release\lbm_ibm_dem.exe `
+    --benchmark-speedup `
+    --steps 10000 `
+    --warmup 500 `
+    --repeats 5
+```
+
+The benchmark reports per-repeat CPU and CUDA runtimes and uses the ratio of
+median runtimes as the headline compute-only speedup. Results are written to:
+
+```text
+results/performance/speedup_results.csv
+results/performance/speedup_report.md
+```
+
+Generate the comparison figure with:
+
+```powershell
+python tools\plot_speedup.py
+```
+
+See `docs/CUDA09_Performance.md` for the exact timing scope and interpretation.
