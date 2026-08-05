@@ -1,12 +1,27 @@
 # CUDA backend
 
-The CUDA backend is being ported one verified operation at a time.
+The CUDA backend is ported and verified one production operation at a time.
 
-Current kernels:
+## Persistent solvers
+
+- `LBMSolverCUDA` owns the device-resident D2Q9 populations, macroscopic
+  fields, and Eulerian force arrays.
+- `IBMParticleCUDA` owns the device-resident rigid-particle state, Lagrangian
+  marker arrays, and accumulated particle loads.
+
+## Verified LBM kernels
 
 - macroscopic density and velocity reconstruction,
-- BGK collision with Guo forcing.
+- BGK collision with Guo forcing,
+- pull streaming with benchmark boundary handling.
 
-The complete sedimentation time loop still runs on the CPU. Each CUDA
-kernel is compared automatically with the production CPU implementation
-before the benchmark starts.
+## Verified IBM kernels
+
+- Eulerian-to-Lagrangian velocity interpolation,
+- direct marker forcing,
+- marker-to-Eulerian force spreading,
+- hydrodynamic force and torque accumulation,
+- rigid-particle integration and marker regeneration.
+
+The complete gravity-driven sedimentation benchmark remains on the CPU until
+external loads and wall contact are connected to the persistent CUDA pipeline.

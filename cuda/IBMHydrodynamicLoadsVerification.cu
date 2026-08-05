@@ -4,6 +4,7 @@
 #include "IBMCoupling.hpp"
 #include "IBMHydrodynamicLoads.cuh"
 #include "IBMParticle.hpp"
+#include "IBMParticleIntegration.cuh"
 #include "SedimentationBenchmark.hpp"
 
 #include <cmath>
@@ -319,11 +320,18 @@ bool runVerificationCase(
     cuda_backend::DeviceArray<double> deviceParticleForceX(1);
     cuda_backend::DeviceArray<double> deviceParticleForceY(1);
     cuda_backend::DeviceArray<double> deviceParticleTorque(1);
+    cuda_backend::DeviceArray<cuda_backend::IBMParticleStateCUDA>
+        deviceParticleState(1);
+
+    cuda_backend::IBMParticleStateCUDA particleState;
+    particleState.x = testCase.particleX;
+    particleState.y = testCase.particleY;
 
     deviceMarkerX.copyFromHost(testCase.markerX);
     deviceMarkerY.copyFromHost(testCase.markerY);
     deviceMarkerForceX.copyFromHost(testCase.markerForceX);
     deviceMarkerForceY.copyFromHost(testCase.markerForceY);
+    deviceParticleState.copyFromHost({particleState});
 
     // Non-zero initial values verify that the launcher mirrors clearLoads()
     // before accumulating the hydrodynamic contributions.
@@ -336,10 +344,9 @@ bool runVerificationCase(
         deviceMarkerY.data(),
         deviceMarkerForceX.data(),
         deviceMarkerForceY.data(),
+        deviceParticleState.data(),
         static_cast<int>(markerCount),
         testCase.markerSpacing,
-        testCase.particleX,
-        testCase.particleY,
         deviceParticleForceX.data(),
         deviceParticleForceY.data(),
         deviceParticleTorque.data()

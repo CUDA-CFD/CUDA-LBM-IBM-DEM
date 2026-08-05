@@ -205,4 +205,12 @@ void LBMSolverCUDA::downloadMacroscopic(
     velocityY_.copyToHost(velocityY);
 }
 
+void LBMSolverCUDA::downloadForces(
+    std::vector<double>& forceX,
+    std::vector<double>& forceY) const
+{
+    forceX_.copyToHost(forceX);
+    forceY_.copyToHost(forceY);
+}
+
 } // namespace cuda_backend

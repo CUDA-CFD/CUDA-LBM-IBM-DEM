@@ -1,6 +1,7 @@
 #include "IBMForcing.cuh"
 
 #include "CUDAUtils.cuh"
+#include "IBMParticleIntegration.cuh"
 
 #include <cuda_runtime.h>
 
@@ -13,13 +14,10 @@ namespace
 // Reads:
 //   - marker position
 //   - interpolated fluid velocity at the marker
-//   - rigid-particle translational and angular velocity
+//   - persistent rigid-particle state
 //
 // Writes:
 //   - direct-forcing components for that marker
-//
-// Each thread writes to a unique marker entry, so no atomics or synchronization
-// are required.
 // -----------------------------------------------------------------------------
 __global__ void computeIBMDirectForcingKernel(
     const double* markerX,
@@ -28,12 +26,8 @@ __global__ void computeIBMDirectForcingKernel(
     const double* fluidUy,
     double* markerForceX,
     double* markerForceY,
+    const cuda_backend::IBMParticleStateCUDA* particle,
     int markerCount,
-    double particleX,
-    double particleY,
-    double particleVelocityX,
-    double particleVelocityY,
-    double particleAngularVelocity,
     double dt)
 {
     const int marker =
@@ -44,14 +38,14 @@ __global__ void computeIBMDirectForcingKernel(
         return;
     }
 
-    const double relativeX = markerX[marker] - particleX;
-    const double relativeY = markerY[marker] - particleY;
+    const double relativeX = markerX[marker] - particle->x;
+    const double relativeY = markerY[marker] - particle->y;
 
     const double boundaryVelocityX =
-        particleVelocityX - particleAngularVelocity * relativeY;
+        particle->vx - particle->omega * relativeY;
 
     const double boundaryVelocityY =
-        particleVelocityY + particleAngularVelocity * relativeX;
+        particle->vy + particle->omega * relativeX;
 
     markerForceX[marker] =
         (boundaryVelocityX - fluidUx[marker]) / dt;
@@ -72,12 +66,8 @@ void launchIBMDirectForcing(
     const double* dFluidUy,
     double* dMarkerForceX,
     double* dMarkerForceY,
+    const IBMParticleStateCUDA* dParticleState,
     int markerCount,
-    double particleX,
-    double particleY,
-    double particleVelocityX,
-    double particleVelocityY,
-    double particleAngularVelocity,
     double dt)
 {
     if (markerCount <= 0)
@@ -96,12 +86,8 @@ void launchIBMDirectForcing(
         dFluidUy,
         dMarkerForceX,
         dMarkerForceY,
+        dParticleState,
         markerCount,
-        particleX,
-        particleY,
-        particleVelocityX,
-        particleVelocityY,
-        particleAngularVelocity,
         dt);
 
     CUDA_CHECK(cudaGetLastError());

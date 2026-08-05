@@ -50,6 +50,21 @@ public:
         std::vector<double>& velocityX,
         std::vector<double>& velocityY
     ) const;
+    void downloadForces(
+        std::vector<double>& forceX,
+        std::vector<double>& forceY
+    ) const;
+
+    const double* deviceVelocityX() const noexcept
+    {
+        return velocityX_.data();
+    }
+    const double* deviceVelocityY() const noexcept
+    {
+        return velocityY_.data();
+    }
+    double* deviceForceX() noexcept { return forceX_.data(); }
+    double* deviceForceY() noexcept { return forceY_.data(); }
 
     int nx() const noexcept { return nx_; }
     int ny() const noexcept { return ny_; }

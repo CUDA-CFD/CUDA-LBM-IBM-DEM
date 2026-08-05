@@ -4,6 +4,7 @@
 #include "IBMCoupling.hpp"
 #include "IBMForcing.cuh"
 #include "IBMParticle.hpp"
+#include "IBMParticleIntegration.cuh"
 #include "SedimentationBenchmark.hpp"
 #include "VerificationMetrics.hpp"
 
@@ -261,11 +262,21 @@ bool runVerificationCase(
     cuda_backend::DeviceArray<double> deviceFluidUy(markerCount);
     cuda_backend::DeviceArray<double> deviceForceX(markerCount);
     cuda_backend::DeviceArray<double> deviceForceY(markerCount);
+    cuda_backend::DeviceArray<cuda_backend::IBMParticleStateCUDA>
+        deviceParticleState(1);
+
+    cuda_backend::IBMParticleStateCUDA particleState;
+    particleState.x = testCase.particleX;
+    particleState.y = testCase.particleY;
+    particleState.vx = testCase.particleVelocityX;
+    particleState.vy = testCase.particleVelocityY;
+    particleState.omega = testCase.particleAngularVelocity;
 
     deviceMarkerX.copyFromHost(testCase.markerX);
     deviceMarkerY.copyFromHost(testCase.markerY);
     deviceFluidUx.copyFromHost(testCase.fluidUx);
     deviceFluidUy.copyFromHost(testCase.fluidUy);
+    deviceParticleState.copyFromHost({particleState});
 
     cuda_backend::launchIBMDirectForcing(
         deviceMarkerX.data(),
@@ -274,12 +285,8 @@ bool runVerificationCase(
         deviceFluidUy.data(),
         deviceForceX.data(),
         deviceForceY.data(),
+        deviceParticleState.data(),
         static_cast<int>(markerCount),
-        testCase.particleX,
-        testCase.particleY,
-        testCase.particleVelocityX,
-        testCase.particleVelocityY,
-        testCase.particleAngularVelocity,
         testCase.dt
     );
     CUDA_CHECK(cudaDeviceSynchronize());

@@ -9,6 +9,7 @@
 #include "IBMSpreadingVerification.hpp"
 #include "IBMHydrodynamicLoadsVerification.hpp"
 #include "IBMParticleIntegrationVerification.hpp"
+#include "IBMPipelineVerification.hpp"
 #endif
 
 #include <cstdlib>
@@ -27,6 +28,9 @@ struct CommandLineOptions {
     bool verifyIbmSpreading = false;
     bool verifyIbmHydrodynamicLoads = false;
     bool verifyIbmParticleIntegration = false;
+    bool verifyIbmPipeline = false;
+    bool stepsProvided = false;
+    bool intervalProvided = false;
     int steps = 1000;
     int verificationInterval = 100;
 };
@@ -75,12 +79,16 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
         else if (argument == "--verify-ibm-particle-integration") {
             options.verifyIbmParticleIntegration = true;
         }
+        else if (argument == "--verify-ibm-pipeline") {
+            options.verifyIbmPipeline = true;
+        }
         else if (argument == "--steps") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("--steps requires a value.");
             }
             options.steps =
                 parsePositiveInteger(argv[++index], "--steps");
+            options.stepsProvided = true;
         }
         else if (argument == "--interval") {
             if (index + 1 >= argc) {
@@ -88,6 +96,7 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
             }
             options.verificationInterval =
                 parsePositiveInteger(argv[++index], "--interval");
+            options.intervalProvided = true;
         }
         else if (argument == "--help" || argument == "-h") {
             std::cout
@@ -99,7 +108,9 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --verify-ibm-forcing\n"
                 << "  lbm_ibm_dem --verify-ibm-spreading\n"
                 << "  lbm_ibm_dem --verify-ibm-hydrodynamic-loads\n"
-                << "  lbm_ibm_dem --verify-ibm-particle-integration\n";
+                << "  lbm_ibm_dem --verify-ibm-particle-integration\n"
+                << "  lbm_ibm_dem --verify-ibm-pipeline "
+                   "[--steps N] [--interval N]\n";
             std::exit(0);
         }
         else {
@@ -124,7 +135,8 @@ int main(int argc, char** argv)
             static_cast<int>(options.verifyIbmForcing) +
             static_cast<int>(options.verifyIbmSpreading) +
             static_cast<int>(options.verifyIbmHydrodynamicLoads) +
-            static_cast<int>(options.verifyIbmParticleIntegration);
+            static_cast<int>(options.verifyIbmParticleIntegration) +
+            static_cast<int>(options.verifyIbmPipeline);
 
         if (selectedCudaModes > 1) {
             throw std::invalid_argument(
@@ -198,6 +210,21 @@ int main(int argc, char** argv)
 #else
             throw std::runtime_error(
                 "IBM particle-integration verification requires a CUDA-enabled build."
+            );
+#endif
+        }
+
+        if (options.verifyIbmPipeline) {
+#ifdef USE_CUDA
+            cuda_backend::printDeviceInformation();
+            IBMPipelineVerificationSettings settings;
+            settings.steps = options.stepsProvided ? options.steps : 100;
+            settings.interval =
+                options.intervalProvided ? options.verificationInterval : 10;
+            return runIBMPipelineVerification(settings);
+#else
+            throw std::runtime_error(
+                "Persistent IBM pipeline verification requires a CUDA-enabled build."
             );
 #endif
         }

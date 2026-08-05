@@ -3,6 +3,8 @@
 namespace cuda_backend
 {
 
+struct IBMParticleStateCUDA;
+
 void launchIBMDirectForcing(
     const double* dMarkerX,
     const double* dMarkerY,
@@ -10,12 +12,8 @@ void launchIBMDirectForcing(
     const double* dFluidUy,
     double* dMarkerForceX,
     double* dMarkerForceY,
+    const IBMParticleStateCUDA* dParticleState,
     int markerCount,
-    double particleX,
-    double particleY,
-    double particleVelocityX,
-    double particleVelocityY,
-    double particleAngularVelocity,
     double dt);
 
 } // namespace cuda_backend

@@ -1,6 +1,7 @@
 #include "IBMHydrodynamicLoads.cuh"
 
 #include "CUDAUtils.cuh"
+#include "IBMParticleIntegration.cuh"
 
 #include <cuda_runtime.h>
 
@@ -8,29 +9,17 @@ namespace
 {
 
 // -----------------------------------------------------------------------------
-// One CUDA thread owns one Lagrangian marker.
-//
-// Reads:
-//   - marker position
-//   - marker direct-forcing components
-//
-// Atomically accumulates:
-//   - total hydrodynamic force in x
-//   - total hydrodynamic force in y
-//   - total hydrodynamic torque about the particle centre
-//
-// Every valid marker thread contributes to the same three output scalars, so
-// double-precision atomic additions are required.
+// One CUDA thread owns one Lagrangian marker and contributes to the particle's
+// total hydrodynamic force and torque.
 // -----------------------------------------------------------------------------
 __global__ void accumulateIBMHydrodynamicLoadsKernel(
     const double* markerX,
     const double* markerY,
     const double* markerForceX,
     const double* markerForceY,
+    const cuda_backend::IBMParticleStateCUDA* particle,
     int markerCount,
     double markerSpacing,
-    double particleX,
-    double particleY,
     double* particleForceX,
     double* particleForceY,
     double* particleTorque)
@@ -49,8 +38,8 @@ __global__ void accumulateIBMHydrodynamicLoadsKernel(
     const double hydrodynamicForceY =
         -markerForceY[marker] * markerSpacing;
 
-    const double relativeX = markerX[marker] - particleX;
-    const double relativeY = markerY[marker] - particleY;
+    const double relativeX = markerX[marker] - particle->x;
+    const double relativeY = markerY[marker] - particle->y;
 
     const double hydrodynamicTorque =
         relativeX * hydrodynamicForceY
@@ -71,10 +60,9 @@ void launchIBMHydrodynamicLoadAccumulation(
     const double* dMarkerY,
     const double* dMarkerForceX,
     const double* dMarkerForceY,
+    const IBMParticleStateCUDA* dParticleState,
     int markerCount,
     double markerSpacing,
-    double particleX,
-    double particleY,
     double* dParticleForceX,
     double* dParticleForceY,
     double* dParticleTorque)
@@ -97,10 +85,9 @@ void launchIBMHydrodynamicLoadAccumulation(
         dMarkerY,
         dMarkerForceX,
         dMarkerForceY,
+        dParticleState,
         markerCount,
         markerSpacing,
-        particleX,
-        particleY,
         dParticleForceX,
         dParticleForceY,
         dParticleTorque);

@@ -150,3 +150,20 @@
 - Added `--verify-ibm-particle-integration` with six deterministic CPU-GPU cases.
 - Included a 10000-step repeated integration test and a particle with more than one CUDA block of markers.
 - Reported errors for all particle-state variables and both marker-coordinate arrays.
+
+### Commit 021 - Persistent CUDA IBM particle pipeline
+
+- Added `IBMParticleCUDA` with persistent device-resident particle state,
+  marker coordinates, interpolated velocities, marker forces, and accumulated
+  force/torque scalars.
+- Connected interpolation, direct forcing, force spreading, hydrodynamic-load
+  accumulation, particle integration, and marker regeneration without
+  host-device transfers between operations or timesteps.
+- Updated direct-forcing and hydrodynamic-load kernels to read the rigid
+  particle state directly from device memory.
+- Added `--verify-ibm-pipeline` for repeated production-path CPU-GPU comparison
+  on the full 200 x 600 lattice.
+- Added comparisons for LBM fields, Eulerian forces, particle state, marker
+  coordinates, interpolated marker velocities, and marker forces.
+- Kept gravity, buoyancy, and wall contact outside the CUDA pipeline for this
+  commit so the hydrodynamic path can be verified independently.

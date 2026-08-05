@@ -76,6 +76,8 @@ if(ENABLE_CUDA)
         cuda/IBMHydrodynamicLoadsVerification.cu
         cuda/IBMParticleIntegration.cu
         cuda/IBMParticleIntegrationVerification.cu
+        cuda/IBMParticleCUDA.cu
+        cuda/IBMPipelineVerification.cu
         tests/VerificationMetrics.cpp
     )
 
