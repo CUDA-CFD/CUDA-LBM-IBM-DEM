@@ -38,7 +38,7 @@ Generated files:
 ```text
 include/       public class and function declarations
 src/           CPU implementations
-cuda/          future CUDA backend
+cuda/          persistent CUDA LBM-IBM backend
 benchmark/     sedimentation benchmark specification and results
 docs/          architecture and method notes
 results/       generated or curated result files
@@ -55,23 +55,35 @@ with the container walls. The contact force is compressive only and is applied
 when the circular particle overlaps a wall. The CSV output records the wall
 force, maximum overlap, and active-contact state.
 
-## Validate the sedimentation trajectory
+## Validate CPU and CUDA sedimentation trajectories
 
-Run the full benchmark first:
+Generate the CPU and CUDA trajectories:
 
-```bash
-./build/lbm_ibm_dem
+```powershell
+.\build-cuda\Release\lbm_ibm_dem.exe
+.\build-cuda\Release\lbm_ibm_dem.exe --gpu-sedimentation
 ```
 
-Then compare `sedimentation.csv` with the published N=100 particle-position data:
+Then compare both trajectories with the published N=100 particle-position data:
 
-```bash
-python3 tools/validate_sedimentation.py
+```powershell
+python tools\validate_sedimentation.py
 ```
 
-The validation utility has no third-party Python dependencies. It generates a
-comparison CSV, a Markdown error report, and an SVG plot under
-`results/sedimentation_validation/`.
+The dependency-free validation utility reports benchmark metrics for both
+solvers and direct CPU-CUDA agreement. It writes the following files under
+`results/sedimentation_validation/`:
+
+- `validation_comparison.csv`
+- `validation_report.md`
+- `position_comparison.svg`
+- `cpu_gpu_difference.svg`
+
+The same workflow is available through CMake after both simulations have run:
+
+```powershell
+cmake --build build-cuda --target validate_sedimentation --config Release
+```
 
 ## CPU–GPU verification
 

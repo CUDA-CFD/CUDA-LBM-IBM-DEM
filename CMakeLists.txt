@@ -134,11 +134,12 @@ if(Python3_Interpreter_FOUND)
     add_custom_target(validate_sedimentation
         COMMAND ${Python3_EXECUTABLE}
                 ${PROJECT_SOURCE_DIR}/tools/validate_sedimentation.py
-                --simulation ${PROJECT_SOURCE_DIR}/sedimentation.csv
+                --cpu ${PROJECT_SOURCE_DIR}/sedimentation.csv
+                --gpu ${PROJECT_SOURCE_DIR}/sedimentation_gpu.csv
                 --reference ${PROJECT_SOURCE_DIR}/benchmark/sedimentation/reference_position_N100.csv
                 --output-dir ${PROJECT_SOURCE_DIR}/results/sedimentation_validation
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        COMMENT "Comparing sedimentation.csv with the published N=100 reference data"
+        COMMENT "Comparing CPU and CUDA sedimentation trajectories with the published N=100 reference data"
         VERBATIM
     )
 endif()

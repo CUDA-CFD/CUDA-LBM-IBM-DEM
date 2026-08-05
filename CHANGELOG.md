@@ -177,3 +177,12 @@
 - Added `--gpu-sedimentation` for the complete device-resident LBM-IBM benchmark.
 - Added `sedimentation_gpu.csv` plus interval-based `fluid_gpu_*.vtk` and `particle_gpu_*.vtk` output.
 - Limited full fluid and marker device-to-host transfers to VTK output steps; only compact particle/load data are copied for each CSV row.
+
+### Commit 023 - CPU-CUDA sedimentation benchmark plotting and validation
+
+- Extended the dependency-free sedimentation validation script to compare the published N=100 reference, CPU trajectory, and CUDA trajectory together.
+- Added separate benchmark metrics for CPU and CUDA plus direct full-trajectory CPU-CUDA agreement metrics.
+- Added a three-curve trajectory SVG and a CUDA-minus-CPU difference SVG.
+- Expanded the comparison CSV and Markdown report to include both solver results.
+- Updated the CMake validation target, README, and benchmark documentation for the combined workflow.
+- Restored the benchmark reference CSV and explicitly exempted it from the generated-CSV Git ignore rule.

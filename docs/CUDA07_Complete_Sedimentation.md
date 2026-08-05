@@ -56,3 +56,15 @@ Use custom run and VTK intervals:
     --steps 10000 `
     --interval 500
 ```
+
+## Benchmark plotting and validation
+
+After generating both CPU and CUDA trajectory CSV files, run:
+
+```powershell
+python tools\validate_sedimentation.py
+```
+
+The script overlays the published reference, CPU, and CUDA particle-centre
+trajectories and creates a separate CUDA-minus-CPU difference plot. See
+`CUDA08_Sedimentation_Validation.md` for the complete output description.

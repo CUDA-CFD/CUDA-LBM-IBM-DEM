@@ -5,6 +5,7 @@ cmake-build-*/
 # Generated simulation output
 *.vtk
 *.csv
+!benchmark/sedimentation/reference_position_N100.csv
 results/*
 !results/.gitkeep
 
