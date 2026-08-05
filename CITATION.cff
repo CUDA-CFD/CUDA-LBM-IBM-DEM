@@ -1,11 +1,19 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
-title: "CudaLBM-IBM-DEM"
+title: "CUDA-LBM-IBM-DEM"
 type: software
 authors:
   - family-names: Rahmannezhad
     given-names: Javad
-version: 0.1.0
-date-released: 2026-08-02
+version: 1.0.0
+date-released: 2026-08-05
 license: MIT
-repository-code: "https://github.com/javad-rahmannezhad/CudaLBM-IBM-DEM"
+repository-code: "https://github.com/CUDA-CFD/CUDA-LBM-IBM-DEM"
+url: "https://github.com/CUDA-CFD/CUDA-LBM-IBM-DEM"
+keywords:
+  - CUDA
+  - lattice Boltzmann method
+  - immersed boundary method
+  - particle sedimentation
+  - fluid-particle interaction
+  - GPU computing

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     CudaLBM_IBM_DEM
-    VERSION 0.1.0
+    VERSION 1.0.0
     LANGUAGES CXX
 )
 
@@ -35,6 +35,12 @@ target_include_directories(
     lbm_ibm_dem
     PRIVATE
     ${PROJECT_SOURCE_DIR}/include
+)
+
+target_compile_definitions(
+    lbm_ibm_dem
+    PRIVATE
+    CUDA_LBM_IBM_DEM_VERSION="${PROJECT_VERSION}"
 )
 
 if(ENABLE_CUDA)

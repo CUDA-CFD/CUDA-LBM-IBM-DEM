@@ -145,6 +145,11 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 parsePositiveInteger(argv[++index], "--interval");
             options.intervalProvided = true;
         }
+        else if (argument == "--version") {
+            std::cout << "CUDA-LBM-IBM-DEM "
+                      << CUDA_LBM_IBM_DEM_VERSION << '\n';
+            std::exit(0);
+        }
         else if (argument == "--help" || argument == "-h") {
             std::cout
                 << "Usage:\n"
@@ -163,7 +168,8 @@ CommandLineOptions parseCommandLine(int argc, char** argv)
                 << "  lbm_ibm_dem --gpu-sedimentation "
                    "[--steps N] [--interval N]\n"
                 << "  lbm_ibm_dem --benchmark-speedup "
-                   "[--steps N] [--warmup N] [--repeats N]\n";
+                   "[--steps N] [--warmup N] [--repeats N]\n"
+                << "  lbm_ibm_dem --version\n";
             std::exit(0);
         }
         else {
