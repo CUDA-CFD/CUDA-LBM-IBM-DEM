@@ -1,0 +1,90 @@
+name: GPU Simulator
+
+# Optional, non-required check. The hosted runners have no GPU, so this runs
+# the CPU-vs-CUDA verification modes of lbm_ibm_dem on a simulated NVIDIA H100
+# (https://github.com/pantheongpu/pantheonsim). A simulator has no timing
+# model and cannot reproduce hardware-specific behavior, so it complements
+# real-GPU testing and does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "cuda/**"
+      - "src/**"
+      - "include/**"
+      - "tests/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: CUDA verification (CUDA 13.0 and simulated H100)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up the simulated GPU and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@a1b9d4237411f9b2b0e0bb895b4d83377f336a7b # v0.1.9
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+
+      # 90-virtual embeds PTX only, which the simulator runs. The simulator
+      # needs a shared CUDA runtime.
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_CUDA=ON \
+            -DCMAKE_CUDA_ARCHITECTURES=90-virtual \
+            -DCMAKE_CUDA_RUNTIME_LIBRARY=Shared
+
+      - name: Build
+        run: vgpu run --preload cmake --build build -j3 --target lbm_ibm_dem
+
+      # Each mode compares the CUDA stage with the CPU reference, prints a
+      # PASSED line and returns a non-zero exit code otherwise. The step fails
+      # if a mode exits non-zero, does not print its PASSED line, or prints
+      # FAILED or a CUDA error. Every mode runs before the step reports.
+      - name: Verify CUDA stages against the CPU
+        shell: bash
+        run: |
+          set -o pipefail
+          failed=0
+          run_mode() {
+            local pass_re="$1"; shift
+            local log="verify-$1.log"
+            echo "::group::lbm_ibm_dem $*"
+            if ! vgpu run build/lbm_ibm_dem "$@" 2>&1 | tee "$log"; then
+              echo "::error::lbm_ibm_dem $* exited non-zero"
+              failed=1
+            elif ! grep -q "Device: " "$log" || ! grep -q "$pass_re" "$log"; then
+              echo "::error::lbm_ibm_dem $* did not print the expected pass line"
+              failed=1
+            elif grep -Eqi "FAILED|CUDA error" "$log"; then
+              echo "::error::lbm_ibm_dem $* reported a failure"
+              failed=1
+            fi
+            echo "::endgroup::"
+          }
+          run_mode "Full-domain CPU-GPU verification: PASSED" --verify --steps 100 --interval 10
+          run_mode "CUDA IBM interpolation multi-case verification: PASSED" --verify-ibm-interpolation
+          run_mode "verification: PASSED" --verify-ibm-forcing
+          run_mode "verification: PASSED" --verify-ibm-spreading
+          run_mode "verification: PASSED" --verify-ibm-hydrodynamic-loads
+          run_mode "verification: PASSED" --verify-ibm-particle-integration
+          run_mode "Persistent CUDA IBM pipeline verification: PASSED" --verify-ibm-pipeline --steps 50 --interval 10
+          run_mode "Complete CUDA sedimentation verification: PASSED" --verify-cuda-sedimentation --steps 50 --interval 10
+          exit $failed
